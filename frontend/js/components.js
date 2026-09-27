@@ -38,6 +38,26 @@ const components = {
         </div>
       </div>
 
+      <!-- Popular Batch Callout Card -->
+      <div class="card mb-4" style="margin-bottom:20px; background:linear-gradient(135deg, #132247, #1A2F5E); border:1px solid #3B82F6; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:rgba(59,130,246,0.25); display:flex; align-items:center; justify-content:center; color:#60A5FA;">
+            <i data-lucide="flame"></i>
+          </div>
+          <div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
+              <span class="badge badge-accent" style="font-size:0.68rem;">LIVE + RECORDED</span>
+              <span class="badge" style="background:#0F172A; color:#94A3B8; font-size:0.68rem;">Hinglish • Full Syllabus</span>
+            </div>
+            <h3 style="font-size:1.05rem; font-weight:700;">PHOENIX RELOADED 3.0 BY TEAM TITANS</h3>
+            <p style="font-size:0.8rem; color:#94A3B8;">Get access to all top batches & revision notes. Starts at ₹497/month</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('Enrolled in PHOENIX RELOADED 3.0 Batch!', 'success')">
+          Join Batch
+        </button>
+      </div>
+
       <!-- Quick Metrics Grid -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -146,7 +166,42 @@ const components = {
 
     return `
       <div class="practice-header">
-        <h2 class="section-heading">Chapter-Wise & Topic-Wise Practice</h2>
+        <h2 class="section-heading">NEET Question Bank & Topic-Wise Practice</h2>
+
+        <!-- Top Quick Action Cards -->
+        <div class="stats-grid mb-4" style="margin-bottom:20px;">
+          <div class="stat-card" style="cursor:pointer;" onclick="showToast('Compete Leaderboard is unlocking in next cohort!', 'info')">
+            <div class="stat-icon purple"><i data-lucide="trophy"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" style="font-size:1.05rem;">Compete</span>
+              <span class="stat-label">See your rank among peers!</span>
+            </div>
+          </div>
+
+          <div class="stat-card" style="cursor:pointer;" onclick="showToast('Ask a Doubt: Upload photo feature ready!', 'info')">
+            <div class="stat-icon blue"><i data-lucide="help-circle"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" style="font-size:1.05rem;">Ask a Doubt</span>
+              <span class="stat-label">Upload & get instant answers!</span>
+            </div>
+          </div>
+
+          <div class="stat-card" style="cursor:pointer;" onclick="app.selectPracticeDifficulty(null)">
+            <div class="stat-icon green"><i data-lucide="book-marked"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" style="font-size:1.05rem;">Previous Year Qs</span>
+              <span class="stat-label">2378+ Qs (2011 - 2024)</span>
+            </div>
+          </div>
+
+          <div class="stat-card" style="cursor:pointer;" onclick="app.navigate('tests')">
+            <div class="stat-icon red"><i data-lucide="sliders"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" style="font-size:1.05rem;">Custom Practice</span>
+              <span class="stat-label">Pick chapters across subjects!</span>
+            </div>
+          </div>
+        </div>
         
         <!-- Subject Pills -->
         <div class="subject-pills">
