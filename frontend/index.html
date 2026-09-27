@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PrepWise — NEET-UG Practice, Test & Diagnostic Platform</title>
+  
+  <!-- Modern Typography: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX for High-Yield Mathematical & Chemical Formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dark-theme">
+  <!-- Main Application Wrapper -->
+  <div id="app" class="app-layout">
+    
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+      <div class="nav-brand" onclick="app.navigate('dashboard')">
+        <div class="brand-icon">
+          <i data-lucide="crosshair"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Prep<span class="text-accent">Wise</span></span>
+          <span class="brand-tagline">NEET Practice & Assessment</span>
+        </div>
+      </div>
+
+      <nav class="nav-links desktop-only">
+        <button class="nav-btn active" data-tab="dashboard" onclick="app.navigate('dashboard')">
+          <i data-lucide="layout-dashboard"></i> <span>Dashboard</span>
+        </button>
+        <button class="nav-btn" data-tab="practice" onclick="app.navigate('practice')">
+          <i data-lucide="book-open"></i> <span>Practice</span>
+        </button>
+        <button class="nav-btn" data-tab="tests" onclick="app.navigate('tests')">
+          <i data-lucide="clipboard-check"></i> <span>Test Series</span>
+        </button>
+        <button class="nav-btn" data-tab="analytics" onclick="app.navigate('analytics')">
+          <i data-lucide="bar-chart-2"></i> <span>Analysis</span>
+        </button>
+        <button class="nav-btn" data-tab="mistakes" onclick="app.navigate('mistakes')">
+          <i data-lucide="alert-triangle"></i> <span>My Mistakes</span>
+          <span id="mistakeBadgeNav" class="nav-counter badge-danger" style="display:none;">0</span>
+        </button>
+        <button class="nav-btn" data-tab="bookmarks" onclick="app.navigate('bookmarks')">
+          <i data-lucide="bookmark"></i> <span>Bookmarks</span>
+        </button>
+        <button class="nav-btn" data-tab="admin" onclick="app.navigate('admin')">
+          <i data-lucide="shield"></i> <span>Admin</span>
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="user-pill" id="userPill">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details desktop-only">
+            <span class="user-name" id="userName">Aarav Sharma</span>
+            <span class="user-meta" id="userMeta">Class 12 • Target 2026</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-content" id="mainContainer">
+      <!-- Dynamic View Container populated via JS -->
+      <section id="viewDashboard" class="view-section active"></section>
+      <section id="viewPractice" class="view-section"></section>
+      <section id="viewTests" class="view-section"></section>
+      <section id="viewTestEngine" class="view-section"></section>
+      <section id="viewResults" class="view-section"></section>
+      <section id="viewAnalytics" class="view-section"></section>
+      <section id="viewMistakes" class="view-section"></section>
+      <section id="viewBookmarks" class="view-section"></section>
+      <section id="viewAdmin" class="view-section"></section>
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav mobile-only">
+      <button class="bottom-btn active" data-tab="dashboard" onclick="app.navigate('dashboard')">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Home</span>
+      </button>
+      <button class="bottom-btn" data-tab="practice" onclick="app.navigate('practice')">
+        <i data-lucide="book-open"></i>
+        <span>Practice</span>
+      </button>
+      <button class="bottom-btn" data-tab="tests" onclick="app.navigate('tests')">
+        <i data-lucide="clipboard-check"></i>
+        <span>Tests</span>
+      </button>
+      <button class="bottom-btn" data-tab="mistakes" onclick="app.navigate('mistakes')">
+        <i data-lucide="alert-triangle"></i>
+        <span>Mistakes</span>
+      </button>
+      <button class="bottom-btn" data-tab="analytics" onclick="app.navigate('analytics')">
+        <i data-lucide="bar-chart-2"></i>
+        <span>Analysis</span>
+      </button>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Instructions Modal for Starting a Test -->
+    <div id="modalInstructions" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent" id="modalTestType">CHAPTER TEST</span>
+            <h3 id="modalTestTitle">Biology: Human Physiology Test</h3>
+          </div>
+          <button class="modal-close" onclick="app.closeInstructionsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="test-meta-grid">
+            <div class="meta-box">
+              <i data-lucide="clock"></i>
+              <div>
+                <span class="meta-label">Duration</span>
+                <span class="meta-value" id="modalTestDuration">15 mins</span>
+              </div>
+            </div>
+            <div class="meta-box">
+              <i data-lucide="help-circle"></i>
+              <div>
+                <span class="meta-label">Questions</span>
+                <span class="meta-value" id="modalTestQuestions">3 MCQs</span>
+              </div>
+            </div>
+            <div class="meta-box">
+              <i data-lucide="award"></i>
+              <div>
+                <span class="meta-label">Total Marks</span>
+                <span class="meta-value" id="modalTestMarks">12 Marks</span>
+              </div>
+            </div>
+            <div class="meta-box">
+              <i data-lucide="check-circle-2"></i>
+              <div>
+                <span class="meta-label">Marking Scheme</span>
+                <span class="meta-value text-success">+4 Correct / -1 Wrong</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="instructions-content">
+            <h4>Instructions & Exam Guidelines:</h4>
+            <ul>
+              <li>The test is timed strictly by the server. An active countdown timer will run in the top navigation.</li>
+              <li>You can navigate between questions at any time using the <strong>Question Palette</strong>.</li>
+              <li>You can mark questions as <strong>Marked for Review</strong> if you wish to revisit them later.</li>
+              <li>When the timer reaches 00:00:00, your test will be <strong>automatically submitted</strong>.</li>
+              <li>Scoring and mistake analysis are calculated securely on the server upon submission.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="app.closeInstructionsModal()">Cancel</button>
+          <button class="btn btn-primary" id="btnConfirmStartTest">
+            <i data-lucide="play"></i> Start Test Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/state.js"></script>
+  <script src="/static/js/components.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

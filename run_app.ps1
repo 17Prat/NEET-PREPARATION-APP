@@ -1,0 +1,9 @@
+Write-Host "======================================================================" -ForegroundColor Cyan
+Write-Host "          PREPWISE — NEET-UG PRACTICE & TEST PLATFORM" -ForegroundColor Cyan
+Write-Host "              Practice. Test. Analyze. Improve." -ForegroundColor Yellow
+Write-Host "======================================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Starting backend server on http://localhost:8000 ..." -ForegroundColor Green
+
+Start-Process "http://localhost:8000"
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
