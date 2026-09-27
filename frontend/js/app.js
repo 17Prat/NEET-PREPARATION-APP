@@ -18,9 +18,14 @@ const app = {
         state.user.studentGrade = profile.student_grade;
         state.user.role = profile.role;
         
-        document.getElementById('userName').textContent = profile.full_name;
-        document.getElementById('userAvatar').textContent = profile.full_name.charAt(0);
-        document.getElementById('userMeta').textContent = `${profile.student_grade.replace('_', ' ')} • Target ${profile.target_year}`;
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) userNameEl.textContent = profile.full_name;
+        const userAvatarEl = document.getElementById('userAvatar');
+        if (userAvatarEl) userAvatarEl.textContent = profile.full_name.charAt(0);
+        const userMetaEl = document.getElementById('userMeta');
+        if (userMetaEl) userMetaEl.textContent = `${profile.student_grade.replace('_', ' ')} • Target ${profile.target_year}`;
+        const gradeBadge = document.getElementById('currentGradeBadge');
+        if (gradeBadge) gradeBadge.textContent = profile.student_grade === 'CLASS_11' ? '11th Std' : '12th Std';
       }
 
       // 2. Load taxonomy tree
@@ -686,8 +691,142 @@ const app = {
     } catch (err) {
       showToast("Failed to create question: " + err.message, "error");
     }
+  },
+
+  // ==========================================
+  // Courses Menu & Modal Handlers
+  // ==========================================
+
+  toggleCoursesMenu() {
+    const dropdown = document.getElementById('coursesDropdown');
+    const btn = document.getElementById('coursesMenuBtn');
+    if (!dropdown) return;
+    
+    const isOpen = dropdown.classList.contains('show');
+    if (isOpen) {
+      dropdown.classList.remove('show');
+      if (btn) btn.classList.remove('active');
+    } else {
+      dropdown.classList.add('show');
+      if (btn) btn.classList.add('active');
+      lucide.createIcons();
+    }
+  },
+
+  closeCoursesMenu() {
+    const dropdown = document.getElementById('coursesDropdown');
+    const btn = document.getElementById('coursesMenuBtn');
+    if (dropdown) dropdown.classList.remove('show');
+    if (btn) btn.classList.remove('active');
+  },
+
+  selectCourseGrade(gradeName) {
+    this.closeCoursesMenu();
+    
+    // Update badge
+    const badge = document.getElementById('currentGradeBadge');
+    if (badge) badge.textContent = gradeName;
+
+    // Update active checkmarks
+    const items = {
+      '11th Std': document.getElementById('gradeItem11'),
+      '12th Std': document.getElementById('gradeItem12'),
+      'NEET-UG': document.getElementById('gradeItemNeet')
+    };
+
+    Object.keys(items).forEach(k => {
+      if (items[k]) {
+        if (k === gradeName) {
+          items[k].classList.add('active');
+        } else {
+          items[k].classList.remove('active');
+        }
+      }
+    });
+
+    state.user.studentGrade = gradeName === '11th Std' ? 'CLASS_11' : (gradeName === '12th Std' ? 'CLASS_12' : 'REPEATER');
+    showToast(`Switched Course to ${gradeName}`, "success");
+    
+    // If on practice or dashboard, refresh view
+    if (state.currentTab === 'practice') {
+      this.fetchPracticeQuestions();
+    }
+  },
+
+  openHelpModal() {
+    this.closeCoursesMenu();
+    const modal = document.getElementById('modalHelp');
+    if (modal) {
+      modal.classList.add('active');
+      lucide.createIcons();
+    }
+  },
+
+  closeHelpModal() {
+    const modal = document.getElementById('modalHelp');
+    if (modal) modal.classList.remove('active');
+  },
+
+  openRateModal() {
+    this.closeCoursesMenu();
+    const modal = document.getElementById('modalRate');
+    if (modal) {
+      modal.classList.add('active');
+      lucide.createIcons();
+    }
+  },
+
+  closeRateModal() {
+    const modal = document.getElementById('modalRate');
+    if (modal) modal.classList.remove('active');
+  },
+
+  userRating: 5,
+
+  setRating(val) {
+    this.userRating = val;
+    document.querySelectorAll('.star-rating').forEach(star => {
+      const sVal = parseInt(star.getAttribute('data-val'));
+      if (sVal <= val) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
+      }
+    });
+  },
+
+  submitRating() {
+    const fb = document.getElementById('ratingFeedback');
+    if (fb) {
+      fb.style.display = 'block';
+      fb.textContent = `Thank you for rating us ${this.userRating} Stars! ⭐`;
+    }
+    showToast(`Rated ${this.userRating} Stars! Thank you for supporting PrepWise.`, "success");
+    setTimeout(() => {
+      this.closeRateModal();
+      if (fb) fb.style.display = 'none';
+    }, 1500);
+  },
+
+  handleLogout() {
+    this.closeCoursesMenu();
+    if (confirm("Are you sure you want to log out of PrepWise?")) {
+      api.setToken(null);
+      showToast("Logged out successfully.", "info");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
   }
 };
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  const container = document.querySelector('.courses-menu-container');
+  if (container && !container.contains(e.target)) {
+    app.closeCoursesMenu();
+  }
+});
 
 // Initialize App on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {

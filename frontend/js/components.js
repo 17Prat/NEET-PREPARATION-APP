@@ -44,7 +44,7 @@ const components = {
           <div class="stat-icon blue"><i data-lucide="check-circle-2"></i></div>
           <div class="stat-info">
             <span class="stat-value">${stats.total_questions_solved}</span>
-            <span class="stat-label">Questions Attempted</span>
+            <span class="stat-label">No. of Modules Completed</span>
           </div>
         </div>
         <div class="stat-card">

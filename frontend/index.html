@@ -63,11 +63,68 @@
       </nav>
 
       <div class="nav-actions">
-        <div class="user-pill" id="userPill">
-          <div class="user-avatar" id="userAvatar">A</div>
-          <div class="user-details desktop-only">
-            <span class="user-name" id="userName">Aarav Sharma</span>
-            <span class="user-meta" id="userMeta">Class 12 • Target 2026</span>
+        <div class="courses-menu-container">
+          <button class="courses-menu-btn" id="coursesMenuBtn" onclick="app.toggleCoursesMenu()" title="Courses">
+            <i data-lucide="menu"></i>
+            <span class="courses-btn-label">Courses</span>
+          </button>
+          
+          <div class="courses-dropdown" id="coursesDropdown">
+            <div class="dropdown-header">
+              <span class="dropdown-title">Course Selection</span>
+              <span class="dropdown-badge" id="currentGradeBadge">12th Std</span>
+            </div>
+            
+            <div class="dropdown-menu-list">
+              <button class="dropdown-item" id="gradeItem11" onclick="app.selectCourseGrade('11th Std')">
+                <div class="dropdown-item-left">
+                  <i data-lucide="graduation-cap" class="text-accent"></i>
+                  <span>11th Std</span>
+                </div>
+                <i data-lucide="chevron-right" class="item-arrow" style="width:14px; opacity:0.5;"></i>
+              </button>
+
+              <button class="dropdown-item active" id="gradeItem12" onclick="app.selectCourseGrade('12th Std')">
+                <div class="dropdown-item-left">
+                  <i data-lucide="book-open-check" class="text-accent"></i>
+                  <span>12th Std</span>
+                </div>
+                <i data-lucide="check" class="item-check" style="width:16px; color:var(--success);"></i>
+              </button>
+
+              <button class="dropdown-item" id="gradeItemNeet" onclick="app.selectCourseGrade('NEET-UG')">
+                <div class="dropdown-item-left">
+                  <i data-lucide="target" class="text-accent"></i>
+                  <span>NEET-UG</span>
+                </div>
+                <span class="badge badge-accent" style="font-size:0.65rem;">Target</span>
+              </button>
+
+              <div class="dropdown-divider"></div>
+
+              <button class="dropdown-item" onclick="app.openHelpModal()">
+                <div class="dropdown-item-left">
+                  <i data-lucide="help-circle" style="color: #60A5FA;"></i>
+                  <span>Help</span>
+                </div>
+              </button>
+
+              <button class="dropdown-item" onclick="app.openRateModal()">
+                <div class="dropdown-item-left">
+                  <i data-lucide="star" style="color: #FBBF24;"></i>
+                  <span>Rate</span>
+                </div>
+              </button>
+
+              <div class="dropdown-divider"></div>
+
+              <button class="dropdown-item text-danger" onclick="app.handleLogout()">
+                <div class="dropdown-item-left">
+                  <i data-lucide="log-out" style="color: var(--danger);"></i>
+                  <span style="color: var(--danger);">Logout</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -172,6 +229,67 @@
           <button class="btn btn-primary" id="btnConfirmStartTest">
             <i data-lucide="play"></i> Start Test Now
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="modalHelp" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="help-circle" class="text-accent"></i> Help & Student Guidance
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeHelpModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="help-section">
+            <h4 style="margin-bottom:8px; color:var(--accent-light);">How to use PrepWise:</h4>
+            <ul style="padding-left:20px; line-height:1.7; color:var(--text-muted); font-size:0.9rem;">
+              <li><strong>Practice:</strong> Select Subject &gt; Chapter &gt; Topic to solve MCQs with instant explanations.</li>
+              <li><strong>Test Series:</strong> Attempt timed chapter tests, subject tests, and full mock tests.</li>
+              <li><strong>My Mistakes:</strong> Re-solve incorrect questions until they are marked "Resolved".</li>
+              <li><strong>Analysis:</strong> Track subject-wise accuracy and focus on "Areas to Practice".</li>
+            </ul>
+          </div>
+          <div class="help-section" style="margin-top:16px;">
+            <h4 style="margin-bottom:6px; color:var(--text-main);">Need assistance?</h4>
+            <p style="color:var(--text-muted); font-size:0.88rem;">Contact Student Support at <strong class="text-accent">support@prepwise-neet.com</strong></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="app.closeHelpModal()">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate Modal -->
+    <div id="modalRate" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="star" style="color:#FBBF24;"></i> Rate PrepWise
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeRateModal()">&times;</button>
+        </div>
+        <div class="modal-body text-center" style="padding:28px 24px;">
+          <p style="color:var(--text-muted); margin-bottom:16px;">How is your NEET preparation experience?</p>
+          <div class="rating-stars" style="display:flex; justify-content:center; gap:12px; font-size:2rem; cursor:pointer; margin-bottom:16px;">
+            <span class="star-rating active" data-val="1" onclick="app.setRating(1)">★</span>
+            <span class="star-rating active" data-val="2" onclick="app.setRating(2)">★</span>
+            <span class="star-rating active" data-val="3" onclick="app.setRating(3)">★</span>
+            <span class="star-rating active" data-val="4" onclick="app.setRating(4)">★</span>
+            <span class="star-rating active" data-val="5" onclick="app.setRating(5)">★</span>
+          </div>
+          <p id="ratingFeedback" style="font-size:0.88rem; color:var(--success); font-weight:600; display:none;">Thank you for your rating! ⭐</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="app.closeRateModal()">Close</button>
+          <button class="btn btn-primary" onclick="app.submitRating()">Submit Review</button>
         </div>
       </div>
     </div>
