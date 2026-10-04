@@ -5,6 +5,7 @@ from backend.app.models.test import Test, TestQuestion
 from backend.app.models.attempt import TestAttempt, AttemptAnswer
 from backend.app.models.mistake import UserMistake
 from backend.app.models.bookmark import Bookmark
+from backend.app.models.saved_question import SavedQuestion, SavedQuestionOption
 
 __all__ = [
     "User",
@@ -18,5 +19,7 @@ __all__ = [
     "TestAttempt",
     "AttemptAnswer",
     "UserMistake",
-    "Bookmark"
+    "Bookmark",
+    "SavedQuestion",
+    "SavedQuestionOption"
 ]

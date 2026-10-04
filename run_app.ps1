@@ -1,5 +1,5 @@
 Write-Host "======================================================================" -ForegroundColor Cyan
-Write-Host "          PREPWISE — NEET-UG PRACTICE & TEST PLATFORM" -ForegroundColor Cyan
+Write-Host "          MEDICQUBE — NEET-UG PRACTICE & TEST PLATFORM" -ForegroundColor Cyan
 Write-Host "              Practice. Test. Analyze. Improve." -ForegroundColor Yellow
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host ""

@@ -30,6 +30,8 @@ class QuestionOut(BaseModel):
     image_url: Optional[str] = None
     source: Optional[str] = None
     year: Optional[int] = None
+    subject: Optional[str] = None
+    chapter: Optional[str] = None
     options: List[OptionOut]
     is_bookmarked: Optional[bool] = False
 

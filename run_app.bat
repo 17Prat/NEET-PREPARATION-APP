@@ -1,7 +1,7 @@
 @echo off
-title PrepWise NEET Preparation Platform
+title Medicqube NEET Preparation Platform
 echo ======================================================================
-echo           PREPWISE — NEET-UG PRACTICE & TEST PLATFORM
+echo           MEDICQUBE — NEET-UG PRACTICE & TEST PLATFORM
 echo               Practice. Test. Analyze. Improve.
 echo ======================================================================
 echo.

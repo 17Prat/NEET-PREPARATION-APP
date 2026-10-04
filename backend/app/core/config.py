@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "PrepWise NEET Preparation Platform"
+    PROJECT_NAME: str = "Medicqube NEET Preparation Platform"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-neet-prep-key-change-in-prod-2026")
     ALGORITHM: str = "HS256"

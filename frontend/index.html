@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PrepWise — NEET-UG Practice, Test & Diagnostic Platform</title>
+  <title>Medicqube — NEET-UG Practice, Test & Diagnostic Platform</title>
+  <link rel="icon" type="image/svg+xml" href="/static/assets/logo.svg">
   
   <!-- Modern Typography: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,20 +20,55 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.8">
 </head>
-<body class="dark-theme">
+<body class="medconnect-theme">
   <!-- Main Application Wrapper -->
   <div id="app" class="app-layout">
     
     <!-- Top Navigation Header -->
     <header class="navbar">
-      <div class="nav-brand" onclick="app.navigate('dashboard')">
-        <div class="brand-icon">
-          <i data-lucide="crosshair"></i>
+      <div class="nav-brand" onclick="app.navigate('dashboard')" title="Medicqube — Home">
+        <div class="brand-icon" style="background:transparent; box-shadow:none; width:44px; height:44px;">
+          <!-- Medicqube 3D Isometric Medical Cube Logo -->
+          <svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="mqNavTop" x1="12" y1="8" x2="52" y2="30" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#38BDF8"/>
+                <stop offset="100%" stop-color="#0284C7"/>
+              </linearGradient>
+              <linearGradient id="mqNavLeft" x1="12" y1="19" x2="32" y2="55" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1E3A8A"/>
+                <stop offset="100%" stop-color="#0B132B"/>
+              </linearGradient>
+              <linearGradient id="mqNavRight" x1="32" y1="31" x2="52" y2="55" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#2563EB"/>
+                <stop offset="100%" stop-color="#1D4ED8"/>
+              </linearGradient>
+              <linearGradient id="mqNavCross" x1="20" y1="16" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#E0F2FE"/>
+              </linearGradient>
+              <filter id="mqNavGlow" x="4" y="4" width="56" height="56" filterUnits="userSpaceOnUse">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0284C7" flood-opacity="0.45"/>
+              </filter>
+            </defs>
+            <g filter="url(#mqNavGlow)">
+              <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" fill="url(#mqNavTop)"/>
+              <path d="M12 19.5L32 31V54.5L12 43V19.5Z" fill="url(#mqNavLeft)"/>
+              <path d="M32 31L52 19.5V43L32 54.5V31Z" fill="url(#mqNavRight)"/>
+              <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" stroke="#7DD3FC" stroke-width="1.2" stroke-linejoin="round" stroke-opacity="0.6"/>
+              <path d="M12 19.5V43L32 54.5V31" stroke="#38BDF8" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.4"/>
+              <path d="M52 19.5V43L32 54.5" stroke="#60A5FA" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.5"/>
+              <rect x="28.5" y="19.5" width="7" height="23" rx="3.5" fill="url(#mqNavCross)"/>
+              <rect x="20.5" y="27.5" width="23" height="7" rx="3.5" fill="url(#mqNavCross)"/>
+              <circle cx="32" cy="31" r="3.2" fill="#0284C7"/>
+              <circle cx="32" cy="31" r="1.5" fill="#38BDF8"/>
+            </g>
+          </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">Prep<span class="text-accent">Wise</span></span>
+          <span class="brand-title">Medic<span class="text-accent">qube</span></span>
           <span class="brand-tagline">NEET Practice & Assessment</span>
         </div>
       </div>
@@ -50,12 +86,8 @@
         <button class="nav-btn" data-tab="analytics" onclick="app.navigate('analytics')">
           <i data-lucide="bar-chart-2"></i> <span>Analysis</span>
         </button>
-        <button class="nav-btn" data-tab="mistakes" onclick="app.navigate('mistakes')">
-          <i data-lucide="alert-triangle"></i> <span>My Mistakes</span>
-          <span id="mistakeBadgeNav" class="nav-counter badge-danger" style="display:none;">0</span>
-        </button>
         <button class="nav-btn" data-tab="bookmarks" onclick="app.navigate('bookmarks')">
-          <i data-lucide="bookmark"></i> <span>Bookmarks</span>
+          <i data-lucide="bookmark"></i> <span>Saved Questions</span>
         </button>
         <button class="nav-btn" data-tab="admin" onclick="app.navigate('admin')">
           <i data-lucide="shield"></i> <span>Admin</span>
@@ -63,6 +95,12 @@
       </nav>
 
       <div class="nav-actions">
+        <!-- Prominent Quick Action: Add Question to Practice & Test Series -->
+        <button class="btn btn-primary btn-sm header-add-btn" id="btnHeaderAddQuestion" onclick="app.openSaveQuestionModal()" title="Add your questions to Practice & Test Series" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:10px; padding:7px 15px; background:linear-gradient(135deg, #10B981 0%, #059669 100%); border:none; box-shadow:0 3px 12px rgba(16,185,129,0.35); color:#fff; cursor:pointer;">
+          <i data-lucide="plus-circle" style="width:16px; height:16px;"></i>
+          <span>+ Add Question</span>
+        </button>
+
         <div class="courses-menu-container">
           <button class="courses-menu-btn" id="coursesMenuBtn" onclick="app.toggleCoursesMenu()" title="Courses">
             <i data-lucide="menu"></i>
@@ -158,9 +196,9 @@
         <i data-lucide="clipboard-check"></i>
         <span>Tests</span>
       </button>
-      <button class="bottom-btn" data-tab="mistakes" onclick="app.navigate('mistakes')">
-        <i data-lucide="alert-triangle"></i>
-        <span>Mistakes</span>
+      <button class="bottom-btn" data-tab="bookmarks" onclick="app.navigate('bookmarks')">
+        <i data-lucide="bookmark"></i>
+        <span>Saved Qs</span>
       </button>
       <button class="bottom-btn" data-tab="analytics" onclick="app.navigate('analytics')">
         <i data-lucide="bar-chart-2"></i>
@@ -246,7 +284,7 @@
         </div>
         <div class="modal-body">
           <div class="help-section">
-            <h4 style="margin-bottom:8px; color:var(--accent-light);">How to use PrepWise:</h4>
+            <h4 style="margin-bottom:8px; color:var(--accent-light);">How to use Medicqube:</h4>
             <ul style="padding-left:20px; line-height:1.7; color:var(--text-muted); font-size:0.9rem;">
               <li><strong>Practice:</strong> Select Subject &gt; Chapter &gt; Topic to solve MCQs with instant explanations.</li>
               <li><strong>Test Series:</strong> Attempt timed chapter tests, subject tests, and full mock tests.</li>
@@ -256,7 +294,7 @@
           </div>
           <div class="help-section" style="margin-top:16px;">
             <h4 style="margin-bottom:6px; color:var(--text-main);">Need assistance?</h4>
-            <p style="color:var(--text-muted); font-size:0.88rem;">Contact Student Support at <strong class="text-accent">support@prepwise-neet.com</strong></p>
+            <p style="color:var(--text-muted); font-size:0.88rem;">Contact Student Support at <strong class="text-accent">support@medicqube.com</strong></p>
           </div>
         </div>
         <div class="modal-footer">
@@ -271,7 +309,7 @@
         <div class="modal-header">
           <div class="modal-title-group">
             <h3 style="display:flex; align-items:center; gap:8px;">
-              <i data-lucide="star" style="color:#FBBF24;"></i> Rate PrepWise
+              <i data-lucide="star" style="color:#FBBF24;"></i> Rate Medicqube
             </h3>
           </div>
           <button class="modal-close" onclick="app.closeRateModal()">&times;</button>
@@ -294,12 +332,924 @@
       </div>
     </div>
 
+    <!-- Compete / Peer Leaderboard Modal -->
+    <div id="modalCompete" class="modal-overlay" onclick="if(event.target === this) app.closeCompeteModal()">
+      <div class="modal-card" style="max-width: 660px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="trophy" style="color:var(--purple);"></i> All-India NEET Peer Leaderboard
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeCompeteModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- User Standing Highlight -->
+          <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(59, 130, 246, 0.12) 100%); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Your Real-Time Rank</span>
+                <div style="margin:4px 0 0 0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                  <span id="competeUserRank" class="badge badge-accent" style="font-size:0.9rem; padding:4px 10px; background:var(--purple);">Rank #42</span>
+                  <span id="competeUserName" style="font-weight:700;">Medicqube Aspirant</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:18px; font-size:0.88rem;">
+                <div style="text-align:right;">
+                  <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Score</div>
+                  <strong id="competeUserScore" style="color:var(--success); font-size:1.05rem;">615 / 720</strong>
+                </div>
+                <div style="text-align:right;">
+                  <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Percentile</div>
+                  <strong id="competeUserPercentile" class="text-accent" style="font-size:1.05rem;">94.2%</strong>
+                </div>
+                <div style="text-align:right;">
+                  <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Streak</div>
+                  <strong style="color:#F59E0B; font-size:1.05rem;">5 Days 🔥</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div style="display:flex; gap:8px; margin-bottom:14px; overflow-x:auto;">
+            <button class="filter-pill active" id="leadTabAll" onclick="app.setLeaderboardSubject('all')">All-India Overall</button>
+            <button class="filter-pill" id="leadTabBio" onclick="app.setLeaderboardSubject('Biology')">Biology</button>
+            <button class="filter-pill" id="leadTabPhy" onclick="app.setLeaderboardSubject('Physics')">Physics</button>
+            <button class="filter-pill" id="leadTabChem" onclick="app.setLeaderboardSubject('Chemistry')">Chemistry</button>
+          </div>
+
+          <!-- Peer List Container -->
+          <div id="leaderboardListContainer" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; color:var(--text-muted);"><i data-lucide="activity" style="width:13px; height:13px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Live cohort benchmarked across 1,280 active NEET candidates</span>
+          <button class="btn btn-primary" onclick="app.closeCompeteModal(); app.navigate('tests');">
+            <i data-lucide="play"></i> Attempt Test to Rank Up
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask a Doubt Modal -->
+    <div id="modalAskDoubt" class="modal-overlay" onclick="if(event.target === this) app.closeAskDoubtModal()">
+      <div class="modal-card" style="max-width: 680px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="help-circle" style="color:var(--accent-light);"></i> Ask a Doubt — Instant NEET AI Tutor
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeAskDoubtModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <div style="display:flex; gap:10px; margin-bottom:14px; align-items:center; flex-wrap:wrap;">
+            <label class="meta-label" style="margin:0;">Subject:</label>
+            <div style="display:flex; gap:6px;">
+              <button class="filter-pill active" id="doubtSubBio" onclick="app.setDoubtSubject('Biology')">Biology</button>
+              <button class="filter-pill" id="doubtSubPhy" onclick="app.setDoubtSubject('Physics')">Physics</button>
+              <button class="filter-pill" id="doubtSubChem" onclick="app.setDoubtSubject('Chemistry')">Chemistry</button>
+            </div>
+          </div>
+
+          <!-- Quick Doubt Samples -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Quick High-Yield Doubts:</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="badge" style="cursor:pointer; background:var(--bg-surface); border:1px solid var(--border-subtle); padding:6px 10px;" onclick="app.selectQuickDoubt('Biology', 'Why is phycoerythrin found in red algae and what is its role in photosynthesis at ocean depths?')">🌊 Phycoerythrin in Red Algae</span>
+              <span class="badge" style="cursor:pointer; background:var(--bg-surface); border:1px solid var(--border-subtle); padding:6px 10px;" onclick="app.selectQuickDoubt('Physics', 'How to calculate limiting friction force on a 2kg block with coefficient 0.4 when 5N force is applied?')">⚡ Friction on 2kg Block</span>
+              <span class="badge" style="cursor:pointer; background:var(--bg-surface); border:1px solid var(--border-subtle); padding:6px 10px;" onclick="app.selectQuickDoubt('Chemistry', 'Condition for spontaneity of a reaction at constant T and P using Gibbs free energy Delta G?')">🧪 Gibbs Free Energy (&Delta;G)</span>
+            </div>
+          </div>
+
+          <!-- Doubt Textarea -->
+          <div style="margin-bottom:14px;">
+            <textarea id="doubtTextInput" rows="3" style="width:100%; border-radius:var(--radius-md); background:var(--bg-surface); border:1px solid var(--border-subtle); color:var(--text-main); padding:10px 12px; font-family:var(--font-sans); font-size:0.9rem; resize:vertical; box-sizing:border-box;" placeholder="Type your NEET question, doubt, or paste question text here..."></textarea>
+          </div>
+
+          <!-- Image Attachment Area -->
+          <div style="margin-bottom:14px;">
+            <input type="file" id="doubtImageInput" accept="image/*" style="display:none;" onchange="app.handleDoubtImageSelected(event)">
+            <div id="doubtUploadBox" style="border:1.5px dashed var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center; cursor:pointer; background:rgba(255,255,255,0.02); transition:all 0.2s;" onclick="document.getElementById('doubtImageInput').click()">
+              <div id="doubtUploadPrompt" style="display:flex; align-items:center; justify-content:center; gap:8px; color:var(--text-muted); font-size:0.85rem;">
+                <i data-lucide="image" style="width:18px; height:18px;"></i>
+                <span>Upload Question Photo / Screenshot (Optional)</span>
+              </div>
+              <div id="doubtImagePreviewContainer" style="display:none; align-items:center; justify-content:center; gap:12px;">
+                <img id="doubtImagePreview" src="" alt="Doubt Preview" style="max-height:80px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+                <button type="button" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="event.stopPropagation(); app.removeDoubtImage();">Remove Image</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+            <button class="btn btn-primary" id="btnSolveDoubt" onclick="app.submitDoubt()">
+              <i data-lucide="sparkles"></i> Get Instant AI Solution
+            </button>
+          </div>
+
+          <!-- Solution Output Box -->
+          <div id="doubtSolutionBox" style="display:none; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px;">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; color:var(--text-muted);"><i data-lucide="check-circle" style="width:13px; height:13px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Verified with NCERT Curriculum & Past NTA Patterns</span>
+          <button class="btn btn-secondary" onclick="app.closeAskDoubtModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Previous Year Questions (PYQ) Modal -->
+    <div id="modalPYQ" class="modal-overlay" onclick="if(event.target === this) app.closePYQModal()">
+      <div class="modal-card" style="max-width: 720px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="book-marked" style="color:var(--success);"></i> Previous Year Questions (2011 - 2024)
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closePYQModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- Top PYQ Banner -->
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <strong style="color:var(--success); font-size:0.95rem;">2,378+ Authentic NEET PYQs Available</strong>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Target actual exam trends with authentic questions from 2011 to 2024.</div>
+            </div>
+            <button class="btn btn-primary" style="background:var(--success); border-color:var(--success); white-space:nowrap;" onclick="app.startAllPYQPractice()">
+              <i data-lucide="zap"></i> Practice All PYQs Now
+            </button>
+          </div>
+
+          <!-- Interactive Quick Filter Pills -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:6px; letter-spacing:0.04em;">
+              Select Exam Year
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+              <button type="button" class="filter-pill pyq-year-pill active" data-year="all" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('all', event)">All Years (2011-2024)</button>
+              <button type="button" class="filter-pill pyq-year-pill" data-year="2023" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('2023', event)">NEET 2023</button>
+              <button type="button" class="filter-pill pyq-year-pill" data-year="2022" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('2022', event)">NEET 2022</button>
+              <button type="button" class="filter-pill pyq-year-pill" data-year="2021" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('2021', event)">NEET 2021</button>
+              <button type="button" class="filter-pill pyq-year-pill" data-year="2020" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('2020', event)">NEET 2020</button>
+              <button type="button" class="filter-pill pyq-year-pill" data-year="2019" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQYearFilter('2019', event)">NEET 2019</button>
+            </div>
+
+            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:6px; letter-spacing:0.04em;">
+              Select Subject
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="filter-pill pyq-sub-pill active" data-sub="all" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQSubjectFilter('all', event)">All Subjects</button>
+              <button type="button" class="filter-pill pyq-sub-pill" data-sub="Biology" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQSubjectFilter('Biology', event)">🌿 Biology</button>
+              <button type="button" class="filter-pill pyq-sub-pill" data-sub="Physics" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQSubjectFilter('Physics', event)">⚡ Physics</button>
+              <button type="button" class="filter-pill pyq-sub-pill" data-sub="Chemistry" onclick="event.preventDefault(); event.stopPropagation(); app.setPYQSubjectFilter('Chemistry', event)">🧪 Chemistry</button>
+            </div>
+          </div>
+
+          <!-- Hidden dropdown backup for form compatibility -->
+          <div style="display:none;">
+            <select id="pyqYearSelect" onchange="app.filterPYQList()">
+              <option value="all">All Years</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+              <option value="2020">2020</option>
+              <option value="2019">2019</option>
+            </select>
+            <select id="pyqSubjectSelect" onchange="app.filterPYQList()">
+              <option value="all">All</option>
+              <option value="Biology">Biology</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+            </select>
+          </div>
+
+          <!-- Active Filter Status & Count -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:6px 0; border-bottom:1px solid var(--border-subtle);">
+            <span style="font-size:0.85rem; color:var(--text-muted);">
+              Found <strong class="text-accent" id="pyqResultCount">12 Questions</strong>
+            </span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">
+              Click <strong>"Solve Now"</strong> to practice with real-time scoring
+            </span>
+          </div>
+
+          <!-- PYQ Questions List -->
+          <div id="pyqQuestionsContainer" style="display:flex; flex-direction:column; gap:10px;">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; color:var(--text-muted);">Indexed with full step-by-step NCERT solutions</span>
+          <button class="btn btn-secondary" onclick="app.closePYQModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modules Completed Modal -->
+    <div id="modalModulesCompleted" class="modal-overlay" onclick="if(event.target === this) app.closeModulesModal()">
+      <div class="modal-card" style="max-width: 660px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="check-circle-2" style="color:var(--accent-light);"></i> Modules & Practice Progress
+            </h3>
+          </div>
+          <button class="modal-close" data-close-modal="true" onclick="app.closeModulesModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- Summary Cards -->
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:var(--accent-light);" id="modalModCompletedCount">1</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Modules Completed</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:#F59E0B;">96</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Remaining Topics</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:var(--success);">1.0%</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">NEET Coverage</div>
+            </div>
+          </div>
+
+          <!-- Subject Progress Breakdown -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Subject-Wise Syllabus Coverage</h4>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;">
+                <span style="font-weight:600;">🌿 Biology (Botany & Zoology)</span>
+                <span class="text-accent" style="font-weight:600;">1 / 38 Modules (2.6%)</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:2.6%; height:100%; background:var(--accent); border-radius:3px;"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;">
+                <span style="font-weight:600;">🧪 Chemistry (Physical, Organic, Inorganic)</span>
+                <span style="color:var(--text-muted); font-weight:600;">0 / 30 Modules (0.0%)</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:0%; height:100%; background:#10B981; border-radius:3px;"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;">
+                <span style="font-weight:600;">⚡ Physics (Mechanics, Electromagnetism, Modern)</span>
+                <span style="color:var(--text-muted); font-weight:600;">0 / 29 Modules (0.0%)</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:0%; height:100%; background:#8B5CF6; border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active & Recommended Modules -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Recent Active & Recommended Modules</h4>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.25); border-radius:var(--radius-md); padding:12px 14px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="badge badge-accent" style="font-size:0.7rem; padding:2px 6px;">COMPLETED</span>
+                  <strong style="font-size:0.9rem;">Cell Structure & Function</strong>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Biology • 1 Question Attempted</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="app.closeModulesModal(); app.navigate('practice');">Practice Again</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="badge" style="font-size:0.7rem; padding:2px 6px; background:rgba(245, 158, 11, 0.2); color:#F59E0B;">RECOMMENDED</span>
+                  <strong style="font-size:0.9rem;">Genetics & Molecular Basis of Inheritance</strong>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">High Yield NEET Topic • ~12-14 Questions in Exam</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="app.closeModulesModal(); app.navigate('practice');">Start Module</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn btn-secondary" onclick="app.closeModulesModal()">Close</button>
+          <button class="btn btn-primary" onclick="app.closeModulesModal(); app.navigate('practice');">
+            <i data-lucide="book-open"></i> Browse All Practice Modules
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall Accuracy Modal -->
+    <div id="modalOverallAccuracy" class="modal-overlay" onclick="if(event.target === this) app.closeAccuracyModal()">
+      <div class="modal-card" style="max-width: 660px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="target" style="color:var(--success);"></i> Overall Accuracy & Performance Diagnostic
+            </h3>
+          </div>
+          <button class="modal-close" data-close-modal="true" onclick="app.closeAccuracyModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- Accuracy Score Banner -->
+          <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.12) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 18px; margin-bottom: 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+            <div>
+              <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Current Accuracy Rating</span>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-top:2px;">
+                <span id="modalAccPercentage" style="font-size:2.4rem; font-weight:800; color:var(--danger);">0.0%</span>
+                <span class="badge" style="background:rgba(239, 68, 68, 0.2); color:var(--danger); font-size:0.78rem;">Needs Focus</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">NEET Qualifying Target</div>
+              <div style="font-size:1.4rem; font-weight:700; color:var(--success); margin-top:2px;">85%+</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Required for Govt. Medical College</div>
+            </div>
+          </div>
+
+          <!-- Questions Statistics Grid -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Attempt Breakdown</h4>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:18px;">
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+              <div style="font-size:1.3rem; font-weight:700; color:var(--text-main);" id="modalAccTotalAttempted">1</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Attempted</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+              <div style="font-size:1.3rem; font-weight:700; color:var(--success);" id="modalAccCorrect">0</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Correct (+4)</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+              <div style="font-size:1.3rem; font-weight:700; color:var(--danger);" id="modalAccIncorrect">1</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Incorrect (-1)</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+              <div style="font-size:1.3rem; font-weight:700; color:#EF4444;" id="modalAccNegative">-1</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Negative Marks</div>
+            </div>
+          </div>
+
+          <!-- Subject Accuracy Bars -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Subject Accuracy</h4>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Biology</span>
+                <span class="text-danger" style="font-weight:600;">0.0% (0 / 1 correct)</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:0%; height:100%; background:var(--danger); border-radius:3px;"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Chemistry</span>
+                <span style="color:var(--text-muted); font-weight:600;">Not Attempted Yet</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:0%; height:100%; background:var(--text-muted); border-radius:3px;"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Physics</span>
+                <span style="color:var(--text-muted); font-weight:600;">Not Attempted Yet</span>
+              </div>
+              <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="width:0%; height:100%; background:var(--text-muted); border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnostic Tips -->
+          <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.25); border-radius:var(--radius-md); padding:12px 14px; font-size:0.82rem; color:#FBBF24; line-height:1.5;">
+            <strong>💡 NEET Accuracy Booster:</strong> Every incorrect answer penalizes -1 mark and costs hundreds of All India Ranks. Resolve your 2 pending mistakes in the Mistakes Vault to immediately fix conceptual gaps.
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn btn-secondary" onclick="app.closeAccuracyModal()">Close</button>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-secondary" onclick="app.closeAccuracyModal(); app.navigate('mistakes');">
+              <i data-lucide="alert-triangle"></i> Review Mistakes Vault
+            </button>
+            <button class="btn btn-primary" onclick="app.closeAccuracyModal(); app.navigate('analytics');">
+              <i data-lucide="bar-chart-2"></i> View Deep Analytics
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tests Completed Modal -->
+    <div id="modalTestsCompleted" class="modal-overlay" onclick="if(event.target === this) app.closeTestsSummaryModal()">
+      <div class="modal-card" style="max-width: 660px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="award" style="color:var(--purple);"></i> Completed Tests & Scorecards
+            </h3>
+          </div>
+          <button class="modal-close" data-close-modal="true" onclick="app.closeTestsSummaryModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- Top summary -->
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:var(--purple);" id="modalTestCompletedCount">1</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Tests Taken</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:var(--text-main);">-1 / 720</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Latest Score</div>
+            </div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:1.6rem; font-weight:700; color:var(--accent-light);">MOCK</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Test Type</div>
+            </div>
+          </div>
+
+          <!-- Recent Test Attempt Card -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Recent Test History</h4>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="badge badge-accent" style="font-size:0.72rem; padding:2px 8px; background:var(--purple);">SUBMITTED</span>
+                  <strong style="font-size:0.95rem;">NEET Diagnostic Mock Test</strong>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
+                  Submitted on 27 Sep 2026 • Accuracy: <span class="text-danger">0.0%</span> • 1 Question Attempted
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="app.closeTestsSummaryModal(); app.navigate('tests');">
+                Review Solutions
+              </button>
+            </div>
+          </div>
+
+          <!-- Suggested Mock Tests -->
+          <h4 style="font-size:0.95rem; margin-bottom:10px; font-weight:600; color:var(--text-main);">Recommended Next Tests</h4>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <div style="font-weight:600; font-size:0.92rem;">NEET-UG Full Length Mock Test #1</div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">180 Questions • 720 Marks • 200 Minutes • High Yield</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="app.closeTestsSummaryModal(); app.navigate('tests');">
+                Start Test
+              </button>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div>
+                <div style="font-weight:600; font-size:0.92rem;">NEET Biology Sectional Booster</div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">90 Questions • 360 Marks • 90 Minutes • NCERT-Centric</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="app.closeTestsSummaryModal(); app.navigate('tests');">
+                Start Test
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn btn-secondary" onclick="app.closeTestsSummaryModal()">Close</button>
+          <button class="btn btn-primary" onclick="app.closeTestsSummaryModal(); app.navigate('tests');">
+            <i data-lucide="play"></i> Explore All Test Series
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Diagnostic & Progress Profile Modal (Admin) -->
+    <div id="modalStudentProfile" class="modal-overlay">
+      <div class="modal-card report-modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group" style="display:flex; align-items:center; gap:12px;">
+            <div id="studentModalAvatar" class="student-avatar" style="width:44px; height:44px; font-size:1.1rem;">AS</div>
+            <div>
+              <h3 id="studentModalName" style="font-size:1.15rem; margin-bottom:2px;">Aarav Sharma</h3>
+              <div style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:8px;">
+                <span id="studentModalEmail">aarav.sharma@neetprep.com</span>
+                <span>•</span>
+                <span id="studentModalGrade" class="badge badge-accent" style="padding:2px 8px; font-size:0.72rem;">CLASS 12</span>
+                <span id="studentModalTargetYear" class="badge badge-ranker" style="padding:2px 8px; font-size:0.72rem;">NEET 2026</span>
+              </div>
+            </div>
+          </div>
+          <button class="modal-close" onclick="app.closeStudentProfileModal()">&times;</button>
+        </div>
+
+        <div class="modal-body report-modal-body" id="studentModalBody">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div class="modal-footer" style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-secondary" onclick="app.closeStudentProfileModal()">Close Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enroll New Student Modal (Admin) -->
+    <div id="modalEnrollStudent" class="modal-overlay">
+      <div class="modal-card" style="max-width:520px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent">ADMIN CONSOLE</span>
+            <h3>Enroll New NEET Aspirant</h3>
+          </div>
+          <button class="modal-close" onclick="app.closeEnrollStudentModal()">&times;</button>
+        </div>
+        <form onsubmit="app.submitEnrollStudent(event)">
+          <div class="modal-body">
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-1">Full Student Name</label>
+              <input type="text" class="select-control" id="enrollFullName" placeholder="e.g. Aryan Malhotra" required>
+            </div>
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-1">Email Address</label>
+              <input type="email" class="select-control" id="enrollEmail" placeholder="e.g. aryan@neetprep.com" required>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+              <div>
+                <label class="meta-label mb-1">Grade / Cohort</label>
+                <select class="select-control" id="enrollGrade">
+                  <option value="CLASS_11">Class 11</option>
+                  <option value="CLASS_12" selected>Class 12</option>
+                  <option value="REPEATER">Repeater / Dropper</option>
+                </select>
+              </div>
+              <div>
+                <label class="meta-label mb-1">Target Exam Year</label>
+                <select class="select-control" id="enrollTargetYear">
+                  <option value="2026" selected>NEET 2026</option>
+                  <option value="2027">NEET 2027</option>
+                  <option value="2028">NEET 2028</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-1">Initial Password</label>
+              <input type="password" class="select-control" id="enrollPassword" value="neet2026" required>
+            </div>
+          </div>
+          <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" class="btn btn-secondary" onclick="app.closeEnrollStudentModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i data-lucide="user-plus"></i> Enroll Student
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Save Question to Library Modal -->
+    <!-- Unified Question Creator (Practice & Test Series) Modal -->
+    <div id="modalSaveQuestion" class="modal-overlay" onclick="if(event.target === this) app.closeSaveQuestionModal()">
+      <div class="modal-card" style="max-width: 720px; max-height: 92vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent" style="font-size:0.75rem;">MEDICQUBE QUESTION ENGINE</span>
+            <h3 style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+              <i data-lucide="plus-circle" class="text-accent"></i> Add Question to Practice &amp; Test Series
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeSaveQuestionModal()">&times;</button>
+        </div>
+
+        <!-- Mode Tabs: Single Question vs Bulk Paste -->
+        <div style="display:flex; gap:8px; padding:12px 24px 0 24px; border-bottom:1px solid var(--border-subtle); background:var(--bg-elevated);">
+          <button type="button" class="btn btn-sm btn-secondary" id="tabBtnSingle" onclick="app.switchAddQuestionTab('single')" style="border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:2px solid var(--accent); font-weight:700;">
+            <i data-lucide="file-edit"></i> Single Question Form
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" id="tabBtnBulk" onclick="app.switchAddQuestionTab('bulk')" style="border-bottom-left-radius:0; border-bottom-right-radius:0; font-weight:600; opacity:0.75;">
+            <i data-lucide="copy-check"></i> Bulk / Quick Paste
+          </button>
+        </div>
+
+        <!-- TAB 1: Single Question Form -->
+        <form id="saveQuestionForm" onsubmit="app.submitSaveQuestion(event, false)" style="display:flex; flex-direction:column; overflow:hidden; flex:1;">
+          <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+            
+            <!-- Category, Subject, Chapter Row -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+              <div>
+                <label class="meta-label mb-1">Exam / Level</label>
+                <select class="select-control" id="saveQExamLevel" onchange="app.handleExamLevelChange()" required>
+                  <option value="Class 11">Class 11</option>
+                  <option value="Class 12">Class 12</option>
+                  <option value="NEET UG" selected>NEET UG</option>
+                  <option value="NEET PG">NEET PG</option>
+                  <option value="__custom__">+ Custom Category...</option>
+                </select>
+                <input type="text" class="select-control" id="saveQCustomLevel" placeholder="Enter custom category (e.g. AIIMS)" style="display:none; margin-top:6px;">
+              </div>
+
+              <div>
+                <label class="meta-label mb-1">Subject</label>
+                <select class="select-control" id="saveQSubject" onchange="app.handleSavedQSubjectChange()" required>
+                  <option value="Biology" selected>🌿 Biology</option>
+                  <option value="Physics">⚡ Physics</option>
+                  <option value="Chemistry">🧪 Chemistry</option>
+                  <option value="__custom__">+ Custom Subject...</option>
+                </select>
+                <input type="text" class="select-control" id="saveQCustomSubject" placeholder="Enter custom subject..." style="display:none; margin-top:6px;">
+              </div>
+            </div>
+
+            <!-- Chapter & Difficulty Row -->
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:14px; margin-bottom:14px;">
+              <div>
+                <label class="meta-label mb-1">Chapter</label>
+                <select class="select-control" id="saveQChapter" onchange="app.handleSavedQChapterChange()" required>
+                  <!-- Populated dynamically via JS -->
+                </select>
+                <input type="text" class="select-control" id="saveQCustomChapter" placeholder="Enter new or custom chapter name..." style="display:none; margin-top:6px;">
+              </div>
+
+              <div>
+                <label class="meta-label mb-1">Difficulty</label>
+                <select class="select-control" id="saveQDifficulty">
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM" selected>Medium</option>
+                  <option value="HARD">Hard</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Question Statement -->
+            <div style="margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="meta-label mb-0">Question Statement</label>
+                <span style="font-size:0.75rem; color:var(--text-muted);">LaTeX formulas supported: <code>$\\text{SF}_4$</code> or <code>$$E=mc^2$$</code></span>
+              </div>
+              <textarea class="select-control" id="saveQText" rows="3" placeholder="Enter full question statement..." required style="resize:vertical;"></textarea>
+            </div>
+
+            <!-- Question Diagram/Image Upload -->
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-1">Question Diagram / Image (Optional)</label>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input type="file" id="saveQImageFile" accept="image/*" style="display:none;" onchange="app.handleSaveQImageSelected(event, 'question')">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('saveQImageFile').click()">
+                  <i data-lucide="upload"></i> Upload Image File
+                </button>
+                <span style="font-size:0.8rem; color:var(--text-muted);">or paste Image URL:</span>
+                <input type="url" class="select-control" id="saveQImageUrl" placeholder="https://example.com/diagram.png" style="flex:1; min-width:180px; padding:6px 10px; font-size:0.85rem;" oninput="app.handleImageUrlInput('question')">
+              </div>
+              <div id="saveQImagePreviewContainer" style="display:none; margin-top:8px; align-items:center; gap:10px;">
+                <img id="saveQImagePreview" src="" alt="Preview" style="max-height:80px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+                <button type="button" class="btn btn-secondary btn-sm text-danger" onclick="app.removeSaveQImage('question')">Remove Image</button>
+              </div>
+            </div>
+
+            <!-- Options Grid (A, B, C, D) -->
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-2">Options &amp; Correct Answer</label>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <span class="badge" style="padding:2px 6px;">A</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Option A</span>
+                  </div>
+                  <input type="text" class="select-control" id="saveQOptA" placeholder="Option A text..." required>
+                </div>
+
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <span class="badge" style="padding:2px 6px;">B</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Option B</span>
+                  </div>
+                  <input type="text" class="select-control" id="saveQOptB" placeholder="Option B text..." required>
+                </div>
+
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <span class="badge" style="padding:2px 6px;">C</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Option C</span>
+                  </div>
+                  <input type="text" class="select-control" id="saveQOptC" placeholder="Option C text..." required>
+                </div>
+
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <span class="badge" style="padding:2px 6px;">D</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Option D</span>
+                  </div>
+                  <input type="text" class="select-control" id="saveQOptD" placeholder="Option D text..." required>
+                </div>
+              </div>
+
+              <!-- Correct Option Picker -->
+              <div style="display:flex; align-items:center; gap:10px; background:rgba(16, 185, 129, 0.08); padding:8px 12px; border-radius:var(--radius-md); border:1px solid rgba(16, 185, 129, 0.25);">
+                <i data-lucide="check-circle-2" style="width:16px; height:16px; color:var(--success);"></i>
+                <label class="meta-label mb-0" style="color:var(--text-main); font-size:0.85rem;">Mark Correct Option:</label>
+                <select class="select-control" id="saveQCorrectKey" style="width:auto; padding:4px 10px; font-size:0.85rem; font-weight:600; color:var(--success);">
+                  <option value="A">Option A</option>
+                  <option value="B" selected>Option B</option>
+                  <option value="C">Option C</option>
+                  <option value="D">Option D</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Detailed Explanation -->
+            <div style="margin-bottom:14px;">
+              <label class="meta-label mb-1">Detailed Explanation &amp; Solution</label>
+              <textarea class="select-control" id="saveQExplanation" rows="2" placeholder="Step-by-step solution, NCERT textbook reference, or formula derivation..." required style="resize:vertical;"></textarea>
+            </div>
+
+            <!-- Destination Routing Box (Where will question be added?) -->
+            <div style="background:linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border:1px solid rgba(37, 99, 235, 0.25); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:14px;">
+              <div style="font-weight:700; font-size:0.88rem; color:var(--text-main); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <i data-lucide="layers" class="text-accent" style="width:16px; height:16px;"></i> Where to Add This Question?
+              </div>
+              
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--text-main);">
+                  <input type="checkbox" id="destPractice" checked style="width:16px; height:16px; cursor:pointer;">
+                  <span><strong>Practice Mode:</strong> Immediately available under this Subject &amp; Chapter in Practice tab.</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--text-main);">
+                  <input type="checkbox" id="destTest" checked style="width:16px; height:16px; cursor:pointer;" onchange="document.getElementById('testSelectContainer').style.display = this.checked ? 'block' : 'none'">
+                  <span><strong>Test Series:</strong> Add to full NEET Exam test series with countdown timer &amp; scoring (+4, -1).</span>
+                </label>
+
+                <!-- Select Which Test in Test Series -->
+                <div id="testSelectContainer" style="margin-left:24px; margin-top:2px;">
+                  <label class="meta-label mb-1" style="font-size:0.75rem;">Select Test in Test Series:</label>
+                  <select class="select-control" id="destTestSelect" style="padding:5px 8px; font-size:0.82rem;">
+                    <option value="test-medicqube-mock">🏆 Medicqube All-India Practice &amp; Mock Test</option>
+                    <option value="test-neet-mock-01">NEET-UG Multi-Subject Mini Mock 01</option>
+                    <option value="test-bio-diversity">Biology Chapter Test: Diversity of Living Organisms</option>
+                    <option value="test-phy-mechanics">Physics Chapter Test: Mechanics &amp; Motion</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" class="btn btn-secondary" onclick="app.closeSaveQuestionModal()">Cancel</button>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="btn btn-secondary" onclick="app.submitSaveQuestion(event, true)">
+                ➕ Save &amp; Add Another
+              </button>
+              <button type="submit" class="btn btn-primary" id="btnSubmitSaveQuestion">
+                <i data-lucide="check"></i> Add to Practice &amp; Tests
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- TAB 2: Quick Bulk / Paste Import -->
+        <div id="bulkQuestionContainer" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+          <div class="modal-body" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+            <div style="background:rgba(255, 255, 255, 0.03); border:1px dashed var(--border-subtle); border-radius:var(--radius-md); padding:12px; margin-bottom:14px; font-size:0.82rem; color:var(--text-muted); line-height:1.5;">
+              <strong style="color:var(--text-main);">Paste your questions and answers below:</strong><br>
+              Supports questions formatted like this:
+              <pre style="background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; margin-top:6px; color:var(--accent-light); font-size:0.78rem; font-family:monospace;">Q: What is the powerhouse of the cell?
+A) Nucleus
+B) Mitochondria
+C) Ribosome
+D) Lysosome
+Ans: B
+Exp: Mitochondria generate cellular ATP.</pre>
+            </div>
+
+            <!-- Subject & Chapter for Bulk Import -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div>
+                <label class="meta-label mb-1">Target Subject</label>
+                <select class="select-control" id="bulkSubject">
+                  <option value="Biology" selected>Biology</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                </select>
+              </div>
+              <div>
+                <label class="meta-label mb-1">Target Chapter</label>
+                <input type="text" class="select-control" id="bulkChapter" placeholder="e.g. Cell: The Unit of Life or Kinematics" value="General Practice">
+              </div>
+            </div>
+
+            <div>
+              <label class="meta-label mb-1">Paste Questions Block</label>
+              <textarea class="select-control" id="bulkTextarea" rows="9" placeholder="Paste your question, options (A, B, C, D), answer, and explanation here..." style="font-family:monospace; font-size:0.85rem; resize:vertical;"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" class="btn btn-secondary" onclick="app.closeSaveQuestionModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="app.parseAndSubmitBulkQuestions()" id="btnSubmitBulkQuestions">
+              <i data-lucide="zap"></i> Parse &amp; Add All Questions
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Share Question Modal -->
+    <div id="modalShareQuestion" class="modal-overlay" onclick="if(event.target === this) app.closeShareModal()">
+      <div class="modal-card" style="max-width: 540px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent" id="shareModalBadge">SHARE QUESTION</span>
+            <h3 style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+              <i data-lucide="share-2" class="text-accent"></i> Share Question
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeShareModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px;">
+          <!-- Current Privacy Status Card -->
+          <div id="shareStatusBox" style="border-radius:var(--radius-md); padding:14px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-subtle);">
+            <div>
+              <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Current Status</div>
+              <div id="shareStatusLabel" style="font-size:1.05rem; font-weight:700; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+            <button type="button" id="btnToggleShare" class="btn btn-primary btn-sm" onclick="app.toggleShareStatus()">
+              <!-- Populated via JS -->
+            </button>
+          </div>
+
+          <!-- Question Summary Preview -->
+          <div style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:16px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;" id="shareQuestionCategory">Class 12 • Biology • Principles of Inheritance</div>
+            <div id="shareQuestionSnippet" style="font-size:0.9rem; color:var(--text-main); font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;"></div>
+          </div>
+
+          <!-- Shareable Link Box -->
+          <div id="shareLinkSection" style="margin-bottom:16px;">
+            <label class="meta-label mb-1">Shareable Web Link</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" class="select-control" id="shareLinkInput" readonly style="font-size:0.85rem; font-family:monospace; background:rgba(0,0,0,0.3); color:var(--accent-light);">
+              <button type="button" class="btn btn-secondary" onclick="app.copyShareLink()" title="Copy Link to Clipboard">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <p id="shareHelpText" style="font-size:0.78rem; color:var(--text-muted); margin-top:6px;">
+              Anyone with this link can view this question, options, and full step-by-step solution.
+            </p>
+          </div>
+
+          <!-- Quick Text Format Copy -->
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px dashed var(--border-subtle); border-radius:var(--radius-md); padding:10px 14px;">
+            <div>
+              <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Copy Formatted Text</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Formatted for WhatsApp, Telegram, or study notes</div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="app.copyQuestionText()">
+              <i data-lucide="clipboard-copy"></i> Copy Text
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeShareModal()">Done</button>
+          <button type="button" class="btn btn-secondary" onclick="app.previewCurrentSharedQuestion()">
+            <i data-lucide="eye"></i> Preview Shared Card
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Shared Question Modal (for recipients / preview) -->
+    <div id="modalViewShared" class="modal-overlay" onclick="if(event.target === this) app.closeViewSharedModal()">
+      <div class="modal-card" style="max-width: 680px; max-height: 90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent">SHARED QUESTION</span>
+            <h3 style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+              <i data-lucide="file-question" class="text-accent"></i> Question Content
+            </h3>
+          </div>
+          <button class="modal-close" onclick="app.closeViewSharedModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="viewSharedModalBody" style="padding: 20px 24px; overflow-y:auto; flex:1;">
+          <!-- Populated via JS -->
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeViewSharedModal()">Close</button>
+          <button type="button" class="btn btn-primary" onclick="app.closeViewSharedModal(); app.navigate('practice');">
+            <i data-lucide="book-open"></i> Explore Practice Questions
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="/static/js/api.js"></script>
-  <script src="/static/js/state.js"></script>
-  <script src="/static/js/components.js"></script>
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/api.js?v=3.7"></script>
+  <script src="/static/js/state.js?v=3.7"></script>
+  <script src="/static/js/components.js?v=3.7"></script>
+  <script src="/static/js/app.js?v=3.7"></script>
 </body>
 </html>

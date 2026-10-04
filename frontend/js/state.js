@@ -1,5 +1,5 @@
 /**
- * PrepWise State Management & UI Utilities
+ * Medicqube State Management & UI Utilities
  */
 
 const state = {
@@ -37,8 +37,20 @@ const state = {
   latestReview: [],
   reviewFilter: 'ALL', // 'ALL', 'CORRECT', 'WRONG', 'SKIPPED'
 
-  // Admin Selected Tab
-  adminSubTab: 'questions'
+  // Admin Portal State
+  adminSubTab: 'students',
+  adminStudents: [],
+  adminStats: {},
+  adminGradeFilter: 'all',
+  adminSearchQuery: '',
+
+  // Saved Questions State
+  savedQuestionsData: { total_saved: 0, exam_levels: [], subjects: [], chapters: [], questions: [] },
+  savedQuestionsFilter: { exam_level: 'all', subject: 'all', chapter: 'all' },
+  savedQuestionsSubTab: 'my-questions', // 'my-questions' | 'bookmarks'
+  currentShareQuestion: null,
+  newQuestionImageData: null,
+  newQuestionExplanationImageData: null,
 };
 
 // UI Helper: Toast Notifications
@@ -63,7 +75,9 @@ function showToast(message, type = 'info') {
 
 // UI Helper: KaTeX Formula Auto-Renderer
 function renderMathInElement(elem) {
-  if (window.renderMathInElement && elem) {
+  if (!elem) return;
+  // Access KaTeX library's original renderMathInElement or katex
+  if (typeof window.katex !== 'undefined' && typeof window.renderMathInElement === 'function' && window.renderMathInElement !== renderMathInElement) {
     try {
       window.renderMathInElement(elem, {
         delimiters: [

@@ -1,19 +1,21 @@
 /**
- * PrepWise API Client
+ * Medicqube API Client
  * Centralized asynchronous HTTP interface to FastAPI Backend (/api/v1)
  */
 
 class ApiClient {
   constructor(baseUrl = '') {
     this.baseUrl = baseUrl;
-    this.token = localStorage.getItem('prepwise_token') || null;
+    this.token = localStorage.getItem('medicqube_token') || localStorage.getItem('prepwise_token') || null;
   }
 
   setToken(token) {
     this.token = token;
     if (token) {
+      localStorage.setItem('medicqube_token', token);
       localStorage.setItem('prepwise_token', token);
     } else {
+      localStorage.removeItem('medicqube_token');
       localStorage.removeItem('prepwise_token');
     }
   }
@@ -128,6 +130,29 @@ class ApiClient {
     return this.request('/api/v1/analytics/dashboard');
   }
 
+  getLeaderboard(subject = 'all') {
+    return this.request(`/api/v1/analytics/leaderboard?subject=${encodeURIComponent(subject)}`);
+  }
+
+  askDoubt(subject, doubtText, imageData = null) {
+    return this.request('/api/v1/practice/ask-doubt', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject,
+        doubt_text: doubtText,
+        image_data: imageData,
+      }),
+    });
+  }
+
+  getPYQQuestions(year = null) {
+    let url = '/api/v1/practice/questions?pyq_only=true';
+    if (year && year !== 'all') {
+      url += `&year=${year}`;
+    }
+    return this.request(url);
+  }
+
   getMistakes() {
     return this.request('/api/v1/mistakes');
   }
@@ -149,7 +174,72 @@ class ApiClient {
     });
   }
 
+  // --- Saved Questions & Sharing ---
+  getSavedQuestions(params = {}) {
+    const query = new URLSearchParams();
+    if (params.exam_level && params.exam_level !== 'all') query.set('exam_level', params.exam_level);
+    if (params.subject && params.subject !== 'all') query.set('subject', params.subject);
+    if (params.chapter && params.chapter !== 'all') query.set('chapter', params.chapter);
+    const qs = query.toString();
+    return this.request(`/api/v1/saved-questions${qs ? '?' + qs : ''}`);
+  }
+
+  createSavedQuestion(data) {
+    return this.request('/api/v1/saved-questions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteSavedQuestion(questionId) {
+    return this.request(`/api/v1/saved-questions/${questionId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  toggleShareSavedQuestion(questionId, isShared = null) {
+    let url = `/api/v1/saved-questions/${questionId}/share`;
+    if (isShared !== null) {
+      url += `?is_shared=${isShared}`;
+    }
+    return this.request(url, { method: 'POST' });
+  }
+
+  getSharedQuestion(shareToken) {
+    return this.request(`/api/v1/saved-questions/shared/${shareToken}`);
+  }
+
   // --- Admin Endpoints ---
+  getAdminDashboardStats() {
+    return this.request('/api/v1/admin/dashboard-stats');
+  }
+
+  getAdminStudents(grade = null, search = null) {
+    let url = '/api/v1/admin/students';
+    const params = [];
+    if (grade && grade !== 'all') params.push(`grade=${encodeURIComponent(grade)}`);
+    if (search && search.trim()) params.push(`search=${encodeURIComponent(search.trim())}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return this.request(url);
+  }
+
+  getAdminStudentProfile(studentId) {
+    return this.request(`/api/v1/admin/students/${studentId}`);
+  }
+
+  enrollAdminStudent(studentData) {
+    return this.request('/api/v1/admin/students', {
+      method: 'POST',
+      body: JSON.stringify(studentData),
+    });
+  }
+
+  getAdminQuestions(topicId = null) {
+    let url = '/api/v1/admin/questions';
+    if (topicId) url += `?topic_id=${topicId}`;
+    return this.request(url);
+  }
+
   createAdminQuestion(questionData) {
     return this.request('/api/v1/admin/questions', {
       method: 'POST',
@@ -166,6 +256,21 @@ class ApiClient {
 
   getAdminAttempts() {
     return this.request('/api/v1/admin/attempts');
+  }
+
+  // --- Unified Question & Test Adding ---
+  unifiedAddQuestion(data) {
+    return this.request('/api/v1/practice/unified-add-question', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  unifiedBatchAddQuestions(questions) {
+    return this.request('/api/v1/practice/unified-batch-add', {
+      method: 'POST',
+      body: JSON.stringify(questions),
+    });
   }
 }
 

@@ -1,0 +1,58 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for Top Face -->
+    <linearGradient id="mqTopGrad" x1="12" y1="8" x2="52" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <!-- Gradient for Left Face -->
+    <linearGradient id="mqLeftGrad" x1="12" y1="19" x2="32" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0B132B"/>
+    </linearGradient>
+
+    <!-- Gradient for Right Face -->
+    <linearGradient id="mqRightGrad" x1="32" y1="31" x2="52" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+
+    <!-- Cross Glow Gradient -->
+    <linearGradient id="mqCrossGrad" x1="20" y1="16" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0F2FE"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="mqShadow" x="4" y="4" width="56" height="56" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284C7" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#mqShadow)">
+    <!-- Top Face of Cube -->
+    <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" fill="url(#mqTopGrad)"/>
+    
+    <!-- Left Face of Cube -->
+    <path d="M12 19.5L32 31V54.5L12 43V19.5Z" fill="url(#mqLeftGrad)"/>
+
+    <!-- Right Face of Cube -->
+    <path d="M32 31L52 19.5V43L32 54.5V31Z" fill="url(#mqRightGrad)"/>
+
+    <!-- Isometric Cube Edge Highlights -->
+    <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" stroke="#7DD3FC" stroke-width="1.2" stroke-linejoin="round" stroke-opacity="0.6"/>
+    <path d="M12 19.5V43L32 54.5V31" stroke="#38BDF8" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.4"/>
+    <path d="M52 19.5V43L32 54.5" stroke="#60A5FA" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.5"/>
+
+    <!-- Center Medical Cross (+) Symbol -->
+    <!-- Vertical Cross Bar -->
+    <rect x="28.5" y="19.5" width="7" height="23" rx="3.5" fill="url(#mqCrossGrad)"/>
+    <!-- Horizontal Cross Bar -->
+    <rect x="20.5" y="27.5" width="23" height="7" rx="3.5" fill="url(#mqCrossGrad)"/>
+
+    <!-- Glowing Cyan Center Core -->
+    <circle cx="32" cy="31" r="3.2" fill="#0284C7"/>
+    <circle cx="32" cy="31" r="1.5" fill="#38BDF8"/>
+  </g>
+</svg>
