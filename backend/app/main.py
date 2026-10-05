@@ -42,6 +42,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from fastapi.middleware.gzip import GZipMiddleware
+
+# Enable GZip compression for ultra-fast response delivery (<1s load times)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -82,10 +87,17 @@ app.include_router(admin_router, prefix=settings.API_V1_STR)
 def health_check():
     return {"status": "healthy", "service": "Medicqube NEET Platform", "version": "1.0.0"}
 
-# Mount frontend directory for immediate local preview
+class CachedStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+        return response
+
+# Mount frontend directory with high-performance caching for instant page loads
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend")
 if os.path.exists(frontend_dir):
-    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+    app.mount("/static", CachedStaticFiles(directory=frontend_dir), name="static")
 
     @app.get("/")
     def serve_frontend_index():

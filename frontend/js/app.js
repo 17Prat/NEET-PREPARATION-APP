@@ -3942,6 +3942,26 @@ window.closeAskDoubtModal = () => app.closeAskDoubtModal();
 window.closePYQModal = () => app.closePYQModal();
 window.closeAllModals = () => app.closeAllModals();
 
+// High-Concurrency Anti-Spam Click Throttler & Debounce Protection
+// Protects against 10,000 rapid clicks, button spamming, or freezing under high load
+let lastClickElement = null;
+let lastClickTimestamp = 0;
+const GLOBAL_CLICK_THROTTLE_MS = 300;
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button, .btn, input[type="submit"], .btn-action-sm');
+  if (btn) {
+    const now = Date.now();
+    if (lastClickElement === btn && (now - lastClickTimestamp < GLOBAL_CLICK_THROTTLE_MS)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    lastClickElement = btn;
+    lastClickTimestamp = now;
+  }
+}, true); // Capture phase runs first
+
 // Global click event delegation for quick action cards and all modal close buttons
 document.addEventListener('click', (e) => {
   // 1. UNIVERSAL CROSS / CLOSE BUTTON: Works everywhere across the entire app

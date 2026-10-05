@@ -7,10 +7,15 @@ class ApiClient {
   constructor(baseUrl = '') {
     this.baseUrl = baseUrl;
     this.token = localStorage.getItem('medicqube_token') || localStorage.getItem('prepwise_token') || null;
+    this.inFlightRequests = new Map();
+    this.responseCache = new Map();
+    this.CACHE_TTL_MS = 6000; // 6 seconds memory cache for lightning-fast repeated clicks
   }
 
   setToken(token) {
     this.token = token;
+    this.responseCache.clear();
+    this.inFlightRequests.clear();
     if (token) {
       localStorage.setItem('medicqube_token', token);
       localStorage.setItem('prepwise_token', token);
@@ -21,32 +26,85 @@ class ApiClient {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    const method = (options.method || 'GET').toUpperCase();
+    const isGet = method === 'GET';
+    const cacheKey = `${method}:${endpoint}:${this.token || 'anon'}`;
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    // 1. Fast Cache: Return immediately if fresh cached GET response exists (< 6 sec old)
+    if (isGet && !options.skipCache) {
+      const cached = this.responseCache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL_MS)) {
+        return cached.data;
+      }
     }
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+    // 2. In-Flight Request Deduplication: If identical GET is already active, return the existing Promise!
+    // This protects against 10,000 simultaneous clicks or bursts from slamming the server.
+    if (isGet && this.inFlightRequests.has(cacheKey)) {
+      return this.inFlightRequests.get(cacheKey);
+    }
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+    // Mutation (POST, PATCH, DELETE) invalidates cache
+    if (!isGet) {
+      this.responseCache.clear();
+    }
+
+    const execPromise = (async () => {
+      const url = `${this.baseUrl}${endpoint}`;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      };
+
+      if (this.token) {
+        headers['Authorization'] = `Bearer ${this.token}`;
       }
 
-      return await response.json();
-    } catch (err) {
-      console.error(`API Error on ${endpoint}:`, err);
-      throw err;
+      // 15-second AbortController timeout protection
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers,
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Cache successful GET results
+        if (isGet) {
+          this.responseCache.set(cacheKey, { data, timestamp: Date.now() });
+        }
+
+        return data;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timed out. Please try again.');
+        }
+        console.error(`API Error on ${endpoint}:`, err);
+        throw err;
+      } finally {
+        if (isGet) {
+          this.inFlightRequests.delete(cacheKey);
+        }
+      }
+    })();
+
+    if (isGet) {
+      this.inFlightRequests.set(cacheKey, execPromise);
     }
+
+    return execPromise;
   }
 
   // --- Auth Endpoints ---
