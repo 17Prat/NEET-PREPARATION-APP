@@ -2,7 +2,7 @@ import uuid
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from backend.app.core.database import get_db
 from backend.app.models.user import User
 from backend.app.models.question import Question, QuestionOption
@@ -40,7 +40,7 @@ def create_question(
         difficulty=data.difficulty.upper(),
         explanation=data.explanation,
         image_url=data.image_url,
-        source=data.source,
+        source=data.source or "Medicqube Admin",
         year=data.year,
         is_active=True
     )
@@ -58,19 +58,118 @@ def create_question(
         )
         db.add(opt)
 
+    # Automatically sync to SavedQuestion repository so all students can view & practice it
+    try:
+        chap_name = topic.chapter.name if (topic and topic.chapter) else "General Concepts"
+        sub_name = topic.chapter.subject.name if (topic and topic.chapter and topic.chapter.subject) else "Biology"
+        saved_q = SavedQuestion(
+            id=str(uuid.uuid4()),
+            user_id=current_admin.id if current_admin else None,
+            exam_level="NEET UG",
+            subject=sub_name,
+            chapter=chap_name,
+            question_text=data.question_text,
+            difficulty=data.difficulty.upper(),
+            explanation=data.explanation or "",
+            image_url=data.image_url,
+            is_shared=True,
+            share_token=str(uuid.uuid4())
+        )
+        db.add(saved_q)
+        db.flush()
+
+        for opt_data in data.options:
+            db.add(SavedQuestionOption(
+                id=str(uuid.uuid4()),
+                saved_question_id=saved_q.id,
+                option_key=opt_data.option_key.upper(),
+                option_text=opt_data.option_text,
+                is_correct=opt_data.is_correct,
+                image_url=opt_data.image_url
+            ))
+    except Exception:
+        pass
+
+    # Also automatically add to default mock test series
+    try:
+        mock_test_id = "test-medicqube-mock"
+        test = db.query(Test).filter(Test.id == mock_test_id).first()
+        if not test:
+            test = Test(
+                id=mock_test_id,
+                title="Medicqube All-India Practice & Mock Test",
+                description="Official Medicqube test series containing custom questions with NTA NEET rules (+4, -1).",
+                test_type="FULL_MOCK",
+                duration_minutes=45,
+                total_marks=720,
+                positive_marks_per_q=4.0,
+                negative_marks_per_q=1.0,
+                is_published=True
+            )
+            db.add(test)
+            db.flush()
+
+        existing_tq_count = db.query(TestQuestion).filter(TestQuestion.test_id == test.id).count()
+        db.add(TestQuestion(
+            id=str(uuid.uuid4()),
+            test_id=test.id,
+            question_id=q.id,
+            section_name=topic.chapter.subject.name if (topic and topic.chapter and topic.chapter.subject) else "General",
+            order_index=existing_tq_count + 1
+        ))
+        test.total_marks = int((existing_tq_count + 1) * 4)
+    except Exception:
+        pass
+
     db.commit()
     db.refresh(q)
-    return {"status": "created", "question_id": q.id, "message": "Question successfully added to question bank"}
+    return {
+        "status": "created",
+        "question_id": q.id,
+        "message": "Question successfully added to question bank, practice portal, and active test series"
+    }
 
 @router.get("/questions")
 def list_admin_questions(
     topic_id: Optional[int] = Query(None),
+    subject_id: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Question)
+    query = (
+        db.query(Question)
+        .options(
+            joinedload(Question.topic).joinedload(Topic.chapter).joinedload(Chapter.subject),
+            selectinload(Question.options)
+        )
+    )
+
     if topic_id:
         query = query.filter(Question.topic_id == topic_id)
+    if subject_id and subject_id != 'all':
+        try:
+            s_id = int(subject_id)
+            query = (
+                query.join(Topic, Question.topic_id == Topic.id)
+                .join(Chapter, Topic.chapter_id == Chapter.id)
+                .filter(Chapter.subject_id == s_id)
+            )
+        except ValueError:
+            query = (
+                query.join(Topic, Question.topic_id == Topic.id)
+                .join(Chapter, Topic.chapter_id == Chapter.id)
+                .join(Subject, Chapter.subject_id == Subject.id)
+                .filter(Subject.name.ilike(f"%{subject_id}%"))
+            )
+
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            (Question.question_text.ilike(term)) |
+            (Question.source.ilike(term))
+        )
+
     questions = query.order_by(Question.created_at.desc()).all()
 
     return [
@@ -78,11 +177,21 @@ def list_admin_questions(
             "id": q.id,
             "topic_id": q.topic_id,
             "topic_name": q.topic.name if q.topic else None,
+            "chapter_name": q.topic.chapter.name if (q.topic and q.topic.chapter) else "General Concepts",
+            "subject_name": q.topic.chapter.subject.name if (q.topic and q.topic.chapter and q.topic.chapter.subject) else "Biology",
             "question_text": q.question_text,
             "difficulty": q.difficulty,
             "source": q.source,
             "year": q.year,
             "options_count": len(q.options),
+            "options": [
+                {
+                    "id": opt.id,
+                    "option_key": opt.option_key,
+                    "option_text": opt.option_text,
+                    "is_correct": opt.is_correct
+                } for opt in q.options
+            ],
             "created_at": q.created_at
         } for q in questions
     ]

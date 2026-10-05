@@ -1018,6 +1018,12 @@ window.app = {
         option_c: optC,
         option_d: optD,
         correct_option: correctOptKey,
+        options: [
+          { option_key: 'A', option_text: optA, is_correct: correctOptKey === 'A' },
+          { option_key: 'B', option_text: optB, is_correct: correctOptKey === 'B' },
+          { option_key: 'C', option_text: optC, is_correct: correctOptKey === 'C' },
+          { option_key: 'D', option_text: optD, is_correct: correctOptKey === 'D' },
+        ],
         add_to_practice: true,
         add_to_test: true,
         test_title: `NEET Official Mock: ${chapter}`
@@ -1026,6 +1032,9 @@ window.app = {
       const res = await api.unifiedAddQuestion(payload);
       showToast("Question successfully published to Practice & Test Series!", "success");
       
+      // Invalidate practice question cache so student immediately gets fresh questions
+      state.practiceQuestions = [];
+
       // Reset form
       document.getElementById('formAdminAddQuestion').reset();
       
@@ -1128,26 +1137,52 @@ window.app = {
     const container = document.getElementById('viewPractice');
     container.classList.add('active');
 
-    // If no questions loaded yet for current topic, load them
-    if (state.selectedTopic && state.practiceQuestions.length === 0) {
-      await this.fetchPracticeQuestions();
-    } else {
-      this.renderPracticeContent();
-    }
+    // Immediate ultra-fast skeleton rendering to eliminate perceived lag
+    container.innerHTML = components.renderPracticeLoadingSkeleton(
+      state.taxonomy,
+      state.selectedSubject,
+      state.selectedChapter,
+      state.selectedTopic
+    );
+    lucide.createIcons();
+
+    // Fetch fresh questions for current selection
+    await this.fetchPracticeQuestions(false);
   },
 
-  async fetchPracticeQuestions() {
-    if (!state.selectedTopic) return;
+  async fetchPracticeQuestions(showSkeleton = false) {
+    if (!state.selectedSubject && state.taxonomy && state.taxonomy.length > 0) {
+      state.selectedSubject = state.taxonomy[0];
+      state.selectedChapter = state.selectedSubject.chapters[0] || null;
+      state.selectedTopic = 'ALL';
+    }
+
+    const container = document.getElementById('viewPractice');
+    if (showSkeleton && container) {
+      container.innerHTML = components.renderPracticeLoadingSkeleton(
+        state.taxonomy,
+        state.selectedSubject,
+        state.selectedChapter,
+        state.selectedTopic
+      );
+      lucide.createIcons();
+    }
+
     try {
-      const questions = await api.getPracticeQuestions(state.selectedTopic.id, state.selectedDifficulty);
-      state.practiceQuestions = questions;
+      const topicId = (state.selectedTopic && state.selectedTopic !== 'ALL') ? (state.selectedTopic.id || state.selectedTopic) : null;
+      const chapterId = state.selectedChapter ? state.selectedChapter.id : null;
+
+      const questions = await api.getPracticeQuestions(topicId, state.selectedDifficulty, chapterId);
+      state.practiceQuestions = questions || [];
       state.practiceIndex = 0;
       state.practiceSelectedOpt = null;
       state.practiceRevealed = false;
       state.practiceCurrentResult = null;
       this.renderPracticeContent();
     } catch (err) {
-      showToast("Error loading practice questions", "error");
+      console.error("Error loading practice questions:", err);
+      showToast("Error loading practice questions: " + err.message, "error");
+      this.renderPracticeContent();
     }
   },
 
@@ -1165,7 +1200,22 @@ window.app = {
       state.practiceCurrentResult
     );
     lucide.createIcons();
-    renderMathInElement(container);
+
+    // High performance Math rendering: target only elements with .math-render class
+    if (typeof renderMathInElement === 'function') {
+      const mathElements = container.querySelectorAll('.math-render');
+      mathElements.forEach(el => {
+        try {
+          renderMathInElement(el, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        } catch (e) {}
+      });
+    }
   },
 
   async loadTestsView(filter = null) {
@@ -1294,9 +1344,8 @@ window.app = {
       if (chap) {
         state.selectedSubject = sub;
         state.selectedChapter = chap;
-        state.selectedTopic = chap.topics[0] || null;
+        state.selectedTopic = 'ALL';
         this.navigate('practice');
-        this.fetchPracticeQuestions();
         return;
       }
     }
@@ -1307,8 +1356,8 @@ window.app = {
     if (sub) {
       state.selectedSubject = sub;
       state.selectedChapter = sub.chapters[0] || null;
-      state.selectedTopic = sub.chapters[0] ? sub.chapters[0].topics[0] : null;
-      this.fetchPracticeQuestions();
+      state.selectedTopic = 'ALL';
+      this.fetchPracticeQuestions(true);
     }
   },
 
@@ -1316,22 +1365,24 @@ window.app = {
     const chap = state.selectedSubject.chapters.find(c => c.id === parseInt(chapterId));
     if (chap) {
       state.selectedChapter = chap;
-      state.selectedTopic = chap.topics[0] || null;
-      this.fetchPracticeQuestions();
+      state.selectedTopic = 'ALL';
+      this.fetchPracticeQuestions(true);
     }
   },
 
   selectPracticeTopic(topicId) {
-    const top = state.selectedChapter.topics.find(t => t.id === parseInt(topicId));
-    if (top) {
-      state.selectedTopic = top;
-      this.fetchPracticeQuestions();
+    if (topicId === 'ALL') {
+      state.selectedTopic = 'ALL';
+    } else {
+      const top = state.selectedChapter ? state.selectedChapter.topics.find(t => t.id === parseInt(topicId)) : null;
+      state.selectedTopic = top || null;
     }
+    this.fetchPracticeQuestions(true);
   },
 
   selectPracticeDifficulty(diff) {
     state.selectedDifficulty = diff || null;
-    this.fetchPracticeQuestions();
+    this.fetchPracticeQuestions(true);
   },
 
   async choosePracticeOption(optId) {
@@ -2426,8 +2477,11 @@ window.app = {
     try {
       showToast("Publishing question...", "info");
       await api.createAdminQuestion(payload);
-      showToast("Question successfully added to question bank!", "success");
+      showToast("Question successfully added to question bank & practice portal!", "success");
       document.getElementById('adminQuestionForm').reset();
+      state.practiceQuestions = [];
+      const taxonomy = await api.getTaxonomyTree().catch(() => state.taxonomy);
+      state.taxonomy = taxonomy;
     } catch (err) {
       showToast("Failed to create question: " + err.message, "error");
     }

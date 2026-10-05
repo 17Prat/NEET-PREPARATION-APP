@@ -1,9 +1,10 @@
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from backend.app.core.database import get_db
 from backend.app.models.question import Question, QuestionOption
+from backend.app.models.taxonomy import Subject, Chapter, Topic
 from backend.app.models.bookmark import Bookmark
 from backend.app.models.mistake import UserMistake
 from backend.app.models.user import User
@@ -15,15 +16,36 @@ router = APIRouter(prefix="/practice", tags=["Practice"])
 @router.get("/questions", response_model=List[QuestionOut])
 def get_practice_questions(
     topic_id: Optional[int] = Query(None),
+    chapter_id: Optional[int] = Query(None),
+    subject_id: Optional[int] = Query(None),
     difficulty: Optional[str] = Query(None),
     year: Optional[int] = Query(None),
     pyq_only: Optional[bool] = Query(None),
+    limit: Optional[int] = Query(100),
     current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Question).filter(Question.is_active == True)
+    # Eager load topic -> chapter -> subject and options in 2 batch queries (eliminating hundreds of N+1 queries)
+    query = (
+        db.query(Question)
+        .options(
+            joinedload(Question.topic).joinedload(Topic.chapter).joinedload(Chapter.subject),
+            selectinload(Question.options)
+        )
+        .filter(Question.is_active == True)
+    )
+
     if topic_id is not None:
         query = query.filter(Question.topic_id == topic_id)
+    elif chapter_id is not None:
+        query = query.join(Topic, Question.topic_id == Topic.id).filter(Topic.chapter_id == chapter_id)
+    elif subject_id is not None:
+        query = (
+            query.join(Topic, Question.topic_id == Topic.id)
+            .join(Chapter, Topic.chapter_id == Chapter.id)
+            .filter(Chapter.subject_id == subject_id)
+        )
+
     if difficulty and difficulty.upper() in ("EASY", "MEDIUM", "HARD"):
         query = query.filter(Question.difficulty == difficulty.upper())
     if pyq_only:
@@ -31,12 +53,19 @@ def get_practice_questions(
     if year:
         query = query.filter(Question.year == year)
 
-    questions = query.all()
+    # Order newest first so questions just added by admin show up immediately!
+    questions = query.order_by(Question.created_at.desc()).limit(limit or 100).all()
     
-    # Check bookmarks for the student
-    bookmarked_qids = set(
-        row[0] for row in db.query(Bookmark.question_id).filter(Bookmark.user_id == current_user.id).all()
-    )
+    # Check bookmarks in a single fast indexed query
+    q_ids = [q.id for q in questions]
+    if q_ids:
+        bookmarked_qids = set(
+            row[0] for row in db.query(Bookmark.question_id)
+            .filter(Bookmark.user_id == current_user.id, Bookmark.question_id.in_(q_ids))
+            .all()
+        )
+    else:
+        bookmarked_qids = set()
 
     results = []
     for q in questions:
@@ -205,7 +234,12 @@ class UnifiedQuestionIn(BaseModel):
     image_url: Optional[str] = None
     source: Optional[str] = "Medicqube"
     year: Optional[int] = None
-    options: List[UnifiedOptionIn]
+    options: Optional[List[UnifiedOptionIn]] = None
+    option_a: Optional[str] = None
+    option_b: Optional[str] = None
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    correct_option: Optional[str] = 'A'
     add_to_practice: bool = True
     add_to_test: bool = True
     test_id: Optional[str] = None
@@ -219,6 +253,22 @@ def add_unified_question(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Support both options array or option_a/b/c/d fields from Admin forms
+    if not data.options:
+        opts = []
+        if data.option_a is not None and data.option_a.strip():
+            opts.append(UnifiedOptionIn(option_key="A", option_text=data.option_a.strip(), is_correct=(data.correct_option == "A")))
+        if data.option_b is not None and data.option_b.strip():
+            opts.append(UnifiedOptionIn(option_key="B", option_text=data.option_b.strip(), is_correct=(data.correct_option == "B")))
+        if data.option_c is not None and data.option_c.strip():
+            opts.append(UnifiedOptionIn(option_key="C", option_text=data.option_c.strip(), is_correct=(data.correct_option == "C")))
+        if data.option_d is not None and data.option_d.strip():
+            opts.append(UnifiedOptionIn(option_key="D", option_text=data.option_d.strip(), is_correct=(data.correct_option == "D")))
+        data.options = opts
+
+    if not data.options or len(data.options) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 options are required")
+
     sub_name = (data.subject_name or "Biology").strip()
     subject = db.query(Subject).filter(Subject.name.ilike(sub_name)).first()
     if not subject:
@@ -265,7 +315,7 @@ def add_unified_question(
     if not has_correct and data.options:
         data.options[0].is_correct = True
 
-    # 1. Insert Question
+    # 1. Insert Question into active question bank
     q_id = str(uuid.uuid4())
     q = Question(
         id=q_id,
@@ -294,7 +344,7 @@ def add_unified_question(
         db.add(opt)
 
     test_info = None
-    # 2. Add to Test Series
+    # 2. Add to Test Series so students can take it in mock tests
     if data.add_to_test:
         test = None
         if data.test_id and data.test_id not in ("default", "new", ""):
@@ -330,7 +380,7 @@ def add_unified_question(
         test.total_marks = int((existing_tq_count + 1) * 4)
         test_info = {"id": test.id, "title": test.title}
 
-    # 3. Also sync to SavedQuestion repository for sharing
+    # 3. Also sync to SavedQuestion repository so it's published to all students
     try:
         saved_q = SavedQuestion(
             id=str(uuid.uuid4()),
@@ -338,12 +388,11 @@ def add_unified_question(
             exam_level=data.exam_level or "NEET UG",
             subject=subject.name,
             chapter=chapter.name,
-            topic=topic.name,
             question_text=data.question_text.strip(),
             difficulty=data.difficulty.upper() if data.difficulty else "MEDIUM",
             explanation=data.explanation.strip() if data.explanation else "",
             image_url=data.image_url,
-            is_shared=False,
+            is_shared=True,
             share_token=str(uuid.uuid4())
         )
         db.add(saved_q)

@@ -2,7 +2,8 @@ import uuid
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from sqlalchemy.orm import Session, selectinload, joinedload
 
 from backend.app.core.database import get_db
 from backend.app.models.user import User
@@ -55,7 +56,13 @@ def list_saved_questions(
     current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
-    query = db.query(SavedQuestion).filter(SavedQuestion.user_id == current_user.id)
+    # Query user's own saved questions PLUS all shared/admin-published questions
+    base_filter = or_(SavedQuestion.user_id == current_user.id, SavedQuestion.is_shared == True)
+    query = (
+        db.query(SavedQuestion)
+        .options(selectinload(SavedQuestion.options), joinedload(SavedQuestion.user))
+        .filter(base_filter)
+    )
     
     if exam_level and exam_level.lower() != 'all':
         query = query.filter(SavedQuestion.exam_level == exam_level)
@@ -66,16 +73,15 @@ def list_saved_questions(
 
     questions = query.order_by(SavedQuestion.created_at.desc()).all()
     
-    # Also extract distinct filter options from user's full collection
-    all_user_qs = db.query(SavedQuestion).filter(SavedQuestion.user_id == current_user.id).all()
-    distinct_levels = sorted(list(set(q.exam_level for q in all_user_qs if q.exam_level)))
-    distinct_subjects = sorted(list(set(q.subject for q in all_user_qs if q.subject)))
-    distinct_chapters = sorted(list(set(q.chapter for q in all_user_qs if q.chapter)))
+    # Extract distinct filter options
+    distinct_levels = sorted(list(set(q.exam_level for q in questions if q.exam_level)))
+    distinct_subjects = sorted(list(set(q.subject for q in questions if q.subject)))
+    distinct_chapters = sorted(list(set(q.chapter for q in questions if q.chapter)))
 
-    formatted = [_format_question_out(q, current_user.full_name) for q in questions]
+    formatted = [_format_question_out(q, q.user.full_name if q.user else "Faculty") for q in questions]
 
     return SavedQuestionsSummaryOut(
-        total_saved=len(all_user_qs),
+        total_saved=len(questions),
         exam_levels=distinct_levels,
         subjects=distinct_subjects,
         chapters=distinct_chapters,

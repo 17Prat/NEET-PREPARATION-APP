@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
 from backend.app.core.database import get_db
 from backend.app.models.taxonomy import Subject, Chapter, Topic
 from backend.app.models.question import Question
@@ -10,7 +11,24 @@ router = APIRouter(prefix="/taxonomy", tags=["Taxonomy"])
 
 @router.get("/tree", response_model=List[SubjectOut])
 def get_taxonomy_tree(db: Session = Depends(get_db)):
-    subjects = db.query(Subject).order_by(Subject.display_order).all()
+    # 1. Batch aggregate active question counts in a single query (replaces 200+ N+1 queries)
+    topic_counts = dict(
+        db.query(Question.topic_id, func.count(Question.id))
+        .filter(Question.is_active == True)
+        .group_by(Question.topic_id)
+        .all()
+    )
+
+    # 2. Eagerly load subjects, chapters, and topics in a single efficient query
+    subjects = (
+        db.query(Subject)
+        .options(
+            joinedload(Subject.chapters).joinedload(Chapter.topics)
+        )
+        .order_by(Subject.display_order)
+        .all()
+    )
+
     results = []
     for sub in subjects:
         sub_dict = {
@@ -31,7 +49,7 @@ def get_taxonomy_tree(db: Session = Depends(get_db)):
                 "topics": []
             }
             for top in chap.topics:
-                q_count = db.query(Question).filter(Question.topic_id == top.id, Question.is_active == True).count()
+                q_count = topic_counts.get(top.id, 0)
                 chap_dict["topics"].append({
                     "id": top.id,
                     "name": top.name,

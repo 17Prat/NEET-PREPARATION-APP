@@ -204,11 +204,18 @@ class ApiClient {
     return this.request('/api/v1/taxonomy/tree');
   }
 
-  getPracticeQuestions(topicId, difficulty = null) {
-    let url = `/api/v1/practice/questions?topic_id=${topicId}`;
-    if (difficulty) {
-      url += `&difficulty=${difficulty}`;
+  getPracticeQuestions(topicId = null, difficulty = null, chapterId = null) {
+    let url = '/api/v1/practice/questions?';
+    const params = [];
+    if (topicId && topicId !== 'ALL') {
+      params.push(`topic_id=${topicId}`);
+    } else if (chapterId) {
+      params.push(`chapter_id=${chapterId}`);
     }
+    if (difficulty) {
+      params.push(`difficulty=${encodeURIComponent(difficulty)}`);
+    }
+    url += params.join('&');
     return this.request(url);
   }
 

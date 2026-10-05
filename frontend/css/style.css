@@ -2396,4 +2396,25 @@ input, select, textarea {
   background: #E2E8F0;
 }
 
+/* Practice Skeleton & Micro-Animations */
+@keyframes skeletonWave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes spinLoader {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spinLoader 0.9s linear infinite;
+  display: inline-block;
+}
+
+.skeleton-pulse-card {
+  animation: fadeIn 0.25s ease-out;
+}
+
+
 

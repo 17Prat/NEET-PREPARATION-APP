@@ -230,8 +230,51 @@ const components = {
   },
 
   // ==========================================
-  // 2. Practice View Component
+  // 2. Practice View Component & Fast Skeleton
   // ==========================================
+  renderPracticeLoadingSkeleton(taxonomy, selectedSub, selectedChap, selectedTop) {
+    const currentSub = selectedSub || (taxonomy && taxonomy[0] ? taxonomy[0] : null);
+
+    return `
+      <div class="practice-header">
+        <h2 class="section-heading">NEET Question Bank & Topic-Wise Practice</h2>
+        <div class="subject-pills">
+          ${taxonomy && taxonomy.length > 0 ? taxonomy.map(sub => `
+            <button class="subject-pill ${currentSub && sub.id === currentSub.id ? 'active' : ''}">
+              <i data-lucide="${sub.icon === 'dna' ? 'activity' : sub.icon === 'atom' ? 'zap' : 'flask-conical'}"></i>
+              <span>${sub.name}</span>
+            </button>
+          `).join('') : ''}
+        </div>
+      </div>
+
+      <div class="question-solver-card skeleton-pulse-card" style="padding:32px; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); min-height:360px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+          <div style="height:24px; width:160px; background:linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size:200% 100%; border-radius:6px; animation:skeletonWave 1.4s infinite ease-in-out;"></div>
+          <div style="display:flex; gap:8px;">
+            <div style="height:24px; width:80px; background:#F1F5F9; border-radius:6px;"></div>
+            <div style="height:24px; width:60px; background:#F1F5F9; border-radius:6px;"></div>
+          </div>
+        </div>
+
+        <div style="height:22px; width:92%; background:linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size:200% 100%; border-radius:4px; margin-bottom:12px; animation:skeletonWave 1.4s infinite ease-in-out;"></div>
+        <div style="height:22px; width:75%; background:linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size:200% 100%; border-radius:4px; margin-bottom:28px; animation:skeletonWave 1.4s infinite ease-in-out;"></div>
+
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:28px;">
+          <div style="height:52px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;"></div>
+          <div style="height:52px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;"></div>
+          <div style="height:52px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;"></div>
+          <div style="height:52px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;"></div>
+        </div>
+
+        <div style="display:flex; justify-content:center; align-items:center; gap:8px; color:#64748B; font-size:0.88rem;">
+          <i data-lucide="loader" class="spin" style="width:18px; height:18px; color:var(--primary);"></i>
+          <span>Loading practice questions from question bank...</span>
+        </div>
+      </div>
+    `;
+  },
+
   renderPractice(taxonomy, selectedSub, selectedChap, selectedTop, questions, currentIndex, selectedOpt, revealed, result) {
     if (!taxonomy || taxonomy.length === 0) {
       return `<div class="p-6 text-center text-muted">Loading NEET taxonomy...</div>`;
@@ -308,8 +351,9 @@ const components = {
           <div>
             <label class="meta-label mb-1">Select Topic</label>
             <select class="select-control" onchange="app.selectPracticeTopic(this.value)">
+              <option value="ALL" ${(!currentTop || currentTop === 'ALL') ? 'selected' : ''}>🌟 All Topics in Chapter</option>
               ${currentChap ? currentChap.topics.map(top => `
-                <option value="${top.id}" ${currentTop && top.id === currentTop.id ? 'selected' : ''}>
+                <option value="${top.id}" ${(currentTop && currentTop.id === top.id) ? 'selected' : ''}>
                   ${top.name} (${top.question_count} MCQs)
                 </option>
               `).join('') : '<option>No topics available</option>'}
@@ -426,9 +470,18 @@ const components = {
 
         </div>
       ` : `
-        <div class="card p-6 text-center text-muted">
-          <i data-lucide="inbox" style="width:40px; height:40px; margin-bottom:10px;"></i>
-          <p>No questions found under this topic and difficulty filter.</p>
+        <div class="card p-6 text-center text-muted" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-lg); padding:36px 24px; box-shadow:var(--shadow-sm);">
+          <i data-lucide="inbox" style="width:48px; height:48px; margin-bottom:12px; color:#94A3B8;"></i>
+          <h3 style="font-size:1.15rem; font-weight:700; color:#1E293B; margin-bottom:6px;">No Questions Found in Selected Topic/Filter</h3>
+          <p style="font-size:0.88rem; color:#64748B; max-width:440px; margin:0 auto 16px auto;">Try switching to "All Topics in Chapter" to view all available questions or clear the difficulty filter.</p>
+          <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="app.selectPracticeTopic('ALL')">
+              <i data-lucide="layers"></i> View All Topics in Chapter
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="app.fetchPracticeQuestions(true)">
+              <i data-lucide="rotate-cw"></i> Refresh Questions
+            </button>
+          </div>
         </div>
       `}
     `;
