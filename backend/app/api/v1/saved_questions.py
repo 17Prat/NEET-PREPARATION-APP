@@ -15,7 +15,7 @@ from backend.app.schemas.saved_question import (
     ShareStatusResponse,
     SavedQuestionsSummaryOut,
 )
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_current_user, get_approved_student
 
 router = APIRouter(prefix="/saved-questions", tags=["Saved Questions"])
 
@@ -52,7 +52,7 @@ def list_saved_questions(
     exam_level: Optional[str] = Query(None),
     subject: Optional[str] = Query(None),
     chapter: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     query = db.query(SavedQuestion).filter(SavedQuestion.user_id == current_user.id)
@@ -85,7 +85,7 @@ def list_saved_questions(
 @router.post("", response_model=SavedQuestionOut, status_code=status.HTTP_201_CREATED)
 def create_saved_question(
     data: SavedQuestionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     if not data.question_text.strip():
@@ -134,7 +134,7 @@ def create_saved_question(
 @router.get("/{question_id}", response_model=SavedQuestionOut)
 def get_saved_question(
     question_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     q = db.query(SavedQuestion).filter(
@@ -149,7 +149,7 @@ def get_saved_question(
 def update_saved_question(
     question_id: str,
     data: SavedQuestionUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     q = db.query(SavedQuestion).filter(
@@ -198,7 +198,7 @@ def update_saved_question(
 @router.delete("/{question_id}")
 def delete_saved_question(
     question_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     q = db.query(SavedQuestion).filter(
@@ -216,7 +216,7 @@ def delete_saved_question(
 def toggle_share_saved_question(
     question_id: str,
     is_shared: Optional[bool] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     q = db.query(SavedQuestion).filter(

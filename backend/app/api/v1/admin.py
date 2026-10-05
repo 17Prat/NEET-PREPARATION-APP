@@ -9,7 +9,8 @@ from backend.app.models.question import Question, QuestionOption
 from backend.app.models.test import Test, TestQuestion
 from backend.app.models.attempt import TestAttempt, AttemptAnswer
 from backend.app.models.mistake import UserMistake
-from backend.app.models.taxonomy import Topic
+from backend.app.models.taxonomy import Subject, Chapter, Topic
+from backend.app.models.saved_question import SavedQuestion, SavedQuestionOption
 from backend.app.schemas.admin import QuestionCreate, TestCreate
 from backend.app.schemas.test import TestOut
 from backend.app.api.deps import get_current_admin
@@ -163,7 +164,7 @@ def get_admin_dashboard_stats(
         "target_year": 2026
     }
 
-@router.get("/students")
+@router.get("/students-progress")
 def list_students_with_progress(
     grade: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
@@ -496,3 +497,314 @@ def list_student_attempts(
             "submitted_at": att.submitted_at
         } for att in attempts
     ]
+
+
+# =====================================================================
+# Admin Authentication & Student Approval Workflow
+# =====================================================================
+from sqlalchemy import or_
+from backend.app.core.security import verify_password, create_access_token
+from backend.app.schemas.auth import AdminLoginIn, AdminStatsOut, UserOut, AdminStudentActionIn
+
+@router.post("/login")
+def admin_login(data: AdminLoginIn, db: Session = Depends(get_db)):
+    admin_user = db.query(User).filter(User.email == data.email.strip().lower()).first()
+    if not admin_user or not verify_password(data.password, admin_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid admin email or password")
+    if admin_user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Access denied. User does not have administrative privileges.")
+    token = create_access_token(subject=admin_user.id)
+    return {
+        "status": "APPROVED",
+        "role": admin_user.role,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": UserOut.model_validate(admin_user),
+        "message": "Admin authentication successful."
+    }
+
+@router.get("/stats", response_model=AdminStatsOut)
+def get_admin_dashboard_stats(
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    total = db.query(User).filter(User.role == "STUDENT").count()
+    pending = db.query(User).filter(User.role == "STUDENT", User.status == "PENDING").count()
+    approved = db.query(User).filter(User.role == "STUDENT", User.status == "APPROVED").count()
+    rejected = db.query(User).filter(User.role == "STUDENT", User.status == "REJECTED").count()
+    suspended = db.query(User).filter(User.role == "STUDENT", User.status == "SUSPENDED").count()
+
+    return AdminStatsOut(
+        total_students=total,
+        pending_requests=pending,
+        approved_students=approved,
+        rejected_requests=rejected,
+        suspended_students=suspended
+    )
+
+@router.get("/students")
+def list_students(
+    status: Optional[str] = Query(None, description="Filter by status: PENDING, APPROVED, REJECTED, SUSPENDED, or all"),
+    search: Optional[str] = Query(None, description="Search by name, email, or mobile"),
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(User).filter(User.role == "STUDENT")
+    if status and status.upper() in ("PENDING", "APPROVED", "REJECTED", "SUSPENDED"):
+        query = query.filter(User.status == status.upper())
+    if search and search.strip():
+        term = f"%{search.strip().lower()}%"
+        query = query.filter(
+            or_(
+                User.full_name.ilike(term),
+                User.email.ilike(term),
+                User.mobile.ilike(term)
+            )
+        )
+    students = query.order_by(User.created_at.desc()).all()
+    return [UserOut.model_validate(s) for s in students]
+
+@router.get("/students/{student_id}")
+def get_student_detail(
+    student_id: str,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    student = db.query(User).filter(User.id == student_id, User.role == "STUDENT").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return UserOut.model_validate(student)
+
+@router.patch("/students/{student_id}/approve")
+def approve_student(
+    student_id: str,
+    action: Optional[AdminStudentActionIn] = None,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    student = db.query(User).filter(User.id == student_id, User.role == "STUDENT").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    student.status = "APPROVED"
+    student.approved_at = datetime.now(timezone.utc)
+    student.approved_by = current_admin.id
+    student.rejection_reason = None
+    student.suspension_reason = None
+    db.commit()
+    db.refresh(student)
+    return {
+        "status": "success",
+        "message": f"Student {student.full_name} has been APPROVED! They can now access the platform.",
+        "student": UserOut.model_validate(student)
+    }
+
+@router.patch("/students/{student_id}/reject")
+def reject_student(
+    student_id: str,
+    action: Optional[AdminStudentActionIn] = None,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    student = db.query(User).filter(User.id == student_id, User.role == "STUDENT").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    student.status = "REJECTED"
+    student.rejected_at = datetime.now(timezone.utc)
+    student.rejected_by = current_admin.id
+    student.rejection_reason = (action.reason if action and action.reason else "Registration criteria not met.").strip()
+    db.commit()
+    db.refresh(student)
+    return {
+        "status": "success",
+        "message": f"Student request for {student.full_name} has been REJECTED.",
+        "student": UserOut.model_validate(student)
+    }
+
+@router.patch("/students/{student_id}/suspend")
+def suspend_student(
+    student_id: str,
+    action: Optional[AdminStudentActionIn] = None,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    student = db.query(User).filter(User.id == student_id, User.role == "STUDENT").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    student.status = "SUSPENDED"
+    student.suspended_at = datetime.now(timezone.utc)
+    student.suspended_by = current_admin.id
+    student.suspension_reason = (action.reason if action and action.reason else "Administrative suspension.").strip()
+    db.commit()
+    db.refresh(student)
+    return {
+        "status": "success",
+        "message": f"Student account for {student.full_name} has been SUSPENDED.",
+        "student": UserOut.model_validate(student)
+    }
+
+@router.patch("/students/{student_id}/reactivate")
+def reactivate_student(
+    student_id: str,
+    action: Optional[AdminStudentActionIn] = None,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    student = db.query(User).filter(User.id == student_id, User.role == "STUDENT").first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    student.status = "APPROVED"
+    student.rejection_reason = None
+    student.suspension_reason = None
+    student.approved_at = datetime.now(timezone.utc)
+    student.approved_by = current_admin.id
+    db.commit()
+    db.refresh(student)
+    return {
+        "status": "success",
+        "message": f"Student account for {student.full_name} has been reactivated to APPROVED status.",
+        "student": UserOut.model_validate(student)
+    }
+
+# =====================================================================
+# Admin Question Repository & Sharing Workflow
+# =====================================================================
+
+@router.get("/questions")
+def list_admin_questions(
+    subject_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Question).join(Topic).join(Chapter).join(Subject)
+    if subject_id:
+        query = query.filter(Subject.id == subject_id)
+    if search and search.strip():
+        term = f"%{search.strip().lower()}%"
+        query = query.filter(
+            or_(
+                Question.question_text.ilike(term),
+                Chapter.name.ilike(term),
+                Subject.name.ilike(term)
+            )
+        )
+    questions = query.order_by(Question.created_at.desc()).all()
+
+    # Pre-fetch saved questions share tokens for fast lookup
+    saved_qs = {sq.question_text.strip(): sq.share_token for sq in db.query(SavedQuestion).all() if sq.share_token}
+
+    results = []
+    for q in questions:
+        topic = q.topic
+        chapter = topic.chapter if topic else None
+        subject = chapter.subject if chapter else None
+
+        share_token = saved_qs.get(q.question_text.strip())
+        if not share_token:
+            share_token = str(uuid.uuid4())
+            try:
+                sq = SavedQuestion(
+                    id=str(uuid.uuid4()),
+                    user_id=current_admin.id,
+                    exam_level="NEET UG",
+                    subject=subject.name if subject else "Biology",
+                    chapter=chapter.name if chapter else "General",
+                    topic=topic.name if topic else "General",
+                    question_text=q.question_text,
+                    difficulty=q.difficulty,
+                    explanation=q.explanation or "",
+                    is_shared=True,
+                    share_token=share_token
+                )
+                db.add(sq)
+                for opt in q.options:
+                    db.add(SavedQuestionOption(
+                        id=str(uuid.uuid4()),
+                        saved_question_id=sq.id,
+                        option_key=opt.option_key,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct
+                    ))
+                db.commit()
+                saved_qs[q.question_text.strip()] = share_token
+            except Exception:
+                db.rollback()
+
+        results.append({
+            "id": q.id,
+            "question_text": q.question_text,
+            "difficulty": q.difficulty,
+            "explanation": q.explanation,
+            "source": q.source or "Medicqube",
+            "year": q.year,
+            "subject_name": subject.name if subject else "Biology",
+            "chapter_name": chapter.name if chapter else "General",
+            "topic_name": topic.name if topic else "General",
+            "exam_level": "NEET UG",
+            "share_token": share_token,
+            "share_url": f"/#shared={share_token}",
+            "options": [
+                {
+                    "id": opt.id,
+                    "option_key": opt.option_key,
+                    "option_text": opt.option_text,
+                    "is_correct": opt.is_correct
+                } for opt in q.options
+            ]
+        })
+    return results
+
+@router.post("/questions/{question_id}/share")
+def share_admin_question(
+    question_id: str,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    sq = db.query(SavedQuestion).filter(SavedQuestion.question_text == q.question_text).first()
+    if not sq:
+        share_token = str(uuid.uuid4())
+        topic = q.topic
+        chapter = topic.chapter if topic else None
+        subject = chapter.subject if chapter else None
+        sq = SavedQuestion(
+            id=str(uuid.uuid4()),
+            user_id=current_admin.id,
+            exam_level="NEET UG",
+            subject=subject.name if subject else "Biology",
+            chapter=chapter.name if chapter else "General",
+            topic=topic.name if topic else "General",
+            question_text=q.question_text,
+            difficulty=q.difficulty,
+            explanation=q.explanation or "",
+            is_shared=True,
+            share_token=share_token
+        )
+        db.add(sq)
+        for opt in q.options:
+            db.add(SavedQuestionOption(
+                id=str(uuid.uuid4()),
+                saved_question_id=sq.id,
+                option_key=opt.option_key,
+                option_text=opt.option_text,
+                is_correct=opt.is_correct
+            ))
+        db.commit()
+        db.refresh(sq)
+    else:
+        sq.is_shared = True
+        if not sq.share_token:
+            sq.share_token = str(uuid.uuid4())
+        db.commit()
+        db.refresh(sq)
+
+    return {
+        "status": "success",
+        "share_token": sq.share_token,
+        "share_url": f"/#shared={sq.share_token}",
+        "message": "Question shared successfully!"
+    }
+

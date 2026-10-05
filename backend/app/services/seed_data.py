@@ -6,7 +6,98 @@ from backend.app.models.question import Question, QuestionOption
 from backend.app.models.test import Test, TestQuestion
 from backend.app.core.security import hash_password
 
+def ensure_demo_accounts(db: Session):
+    """
+    Guarantees testing IDs exist for Admin, Approved Student, and Pending Student.
+    Refreshes credentials so demo test accounts always work reliably.
+    """
+    demo_accounts = [
+        {
+            "email": "student@medicqube.com",
+            "password": "student123",
+            "full_name": "Aarav Sharma (Approved Student)",
+            "mobile": "9876543210",
+            "role": "STUDENT",
+            "status": "APPROVED",
+            "student_grade": "CLASS_12",
+            "target_year": 2026,
+            "preferred_language": "English"
+        },
+        {
+            "email": "admin@medicqube.com",
+            "password": "admin123",
+            "full_name": "Dr. R. K. Verma (Administrator)",
+            "mobile": "9988776655",
+            "role": "ADMIN",
+            "status": "APPROVED",
+            "student_grade": "REPEATER",
+            "target_year": 2026,
+            "preferred_language": "English"
+        },
+        {
+            "email": "pending@medicqube.com",
+            "password": "student123",
+            "full_name": "Rohan Mehra (Pending Demo)",
+            "mobile": "9123456789",
+            "role": "STUDENT",
+            "status": "PENDING",
+            "student_grade": "CLASS_11",
+            "target_year": 2026,
+            "preferred_language": "English"
+        },
+        {
+            "email": "student@neetprep.com",
+            "password": "student123",
+            "full_name": "Aarav Sharma",
+            "mobile": "9876543211",
+            "role": "STUDENT",
+            "status": "APPROVED",
+            "student_grade": "CLASS_12",
+            "target_year": 2026,
+            "preferred_language": "English"
+        },
+        {
+            "email": "admin@neetprep.com",
+            "password": "admin123",
+            "full_name": "Faculty Admin",
+            "mobile": "9988776656",
+            "role": "ADMIN",
+            "status": "APPROVED",
+            "student_grade": "REPEATER",
+            "target_year": 2026,
+            "preferred_language": "English"
+        }
+    ]
+
+    for acc in demo_accounts:
+        user = db.query(User).filter(User.email == acc["email"]).first()
+        if not user:
+            user = User(
+                id=str(uuid.uuid4()),
+                email=acc["email"],
+                mobile=acc["mobile"],
+                hashed_password=hash_password(acc["password"]),
+                full_name=acc["full_name"],
+                target_year=acc["target_year"],
+                student_grade=acc["student_grade"],
+                preferred_language=acc["preferred_language"],
+                role=acc["role"],
+                status=acc["status"],
+                is_active=True
+            )
+            db.add(user)
+        else:
+            user.hashed_password = hash_password(acc["password"])
+            user.role = acc["role"]
+            user.status = acc["status"]
+            user.is_active = True
+    db.commit()
+
+
 def seed_database_if_empty(db: Session, force: bool = False):
+    # Always ensure test and demo accounts are up to date
+    ensure_demo_accounts(db)
+
     # Check if already seeded unless force is True
     if not force and db.query(Subject).first():
         return
@@ -29,11 +120,13 @@ def seed_database_if_empty(db: Session, force: bool = False):
         student = User(
             id=str(uuid.uuid4()),
             email="student@neetprep.com",
+            mobile="9876543210",
             hashed_password=hash_password("neet123"),
             full_name="Aarav Sharma",
             target_year=2026,
             student_grade="CLASS_12",
-            role="STUDENT"
+            role="STUDENT",
+            status="APPROVED"
         )
         db.add(student)
 
@@ -42,11 +135,13 @@ def seed_database_if_empty(db: Session, force: bool = False):
         admin = User(
             id=str(uuid.uuid4()),
             email="admin@neetprep.com",
+            mobile="9988776655",
             hashed_password=hash_password("admin123"),
             full_name="Dr. R. K. Verma (Faculty)",
             target_year=2026,
             student_grade="REPEATER",
-            role="ADMIN"
+            role="ADMIN",
+            status="APPROVED"
         )
         db.add(admin)
 

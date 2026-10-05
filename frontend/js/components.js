@@ -2100,5 +2100,681 @@ const components = {
         ` : ''}
       </div>
     `;
+  },
+
+  // ==========================================
+  // 12. Student Approval & Admin Panel Renderers
+  // ==========================================
+
+  renderApprovalAdminDashboard(stats, pendingStudents = []) {
+    const totalStudents = stats.total_students || 0;
+    const pendingCount = stats.pending_requests !== undefined ? stats.pending_requests : (stats.pending_students || 0);
+    const approvedCount = stats.approved_students || 0;
+    const rejectedCount = stats.rejected_requests !== undefined ? stats.rejected_requests : (stats.rejected_students || 0);
+    const suspendedCount = stats.suspended_students || 0;
+
+    return `
+      <!-- Admin Header Banner -->
+      <div style="margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h1 style="font-size:1.6rem; font-weight:800; font-family:var(--font-display); color:#0F172A; margin-bottom:4px;">
+              Admin Dashboard
+            </h1>
+            <p style="color:#64748B; font-size:0.9rem;">
+              Review student registration requests, manage portal access, and curate questions for students.
+            </p>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="app.navigateAdmin('requests')" style="display:flex; align-items:center; gap:6px;">
+              <i data-lucide="user-check"></i> Review Requests (${pendingCount})
+            </button>
+            <button class="btn btn-secondary" onclick="app.navigateAdmin('addQuestion')" style="display:flex; align-items:center; gap:6px;">
+              <i data-lucide="plus-circle"></i> Add Question
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5-Grid KPI Summary as Requested -->
+      <div class="admin-stats-kpi-grid">
+        <div class="admin-stats-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; color:#64748B; font-size:0.85rem; font-weight:600;">
+            <span>Total Students</span>
+            <i data-lucide="users" style="width:18px; height:18px; color:var(--accent);"></i>
+          </div>
+          <div class="admin-stats-num">${totalStudents.toLocaleString()}</div>
+          <div style="font-size:0.78rem; color:#64748B;">Registered aspirant accounts</div>
+        </div>
+
+        <div class="admin-stats-card card-pending">
+          <div style="display:flex; justify-content:space-between; align-items:center; color:#92400E; font-size:0.85rem; font-weight:600;">
+            <span>Pending Requests</span>
+            <i data-lucide="clock" style="width:18px; height:18px; color:#D97706;"></i>
+          </div>
+          <div class="admin-stats-num" style="color:#B45309;">${pendingCount.toLocaleString()}</div>
+          <div style="font-size:0.78rem; color:#B45309; font-weight:600; display:flex; align-items:center; gap:4px;">
+            <span class="pulse-dot"></span> Requires admin action
+          </div>
+        </div>
+
+        <div class="admin-stats-card card-approved">
+          <div style="display:flex; justify-content:space-between; align-items:center; color:#065F46; font-size:0.85rem; font-weight:600;">
+            <span>Approved Students</span>
+            <i data-lucide="check-circle" style="width:18px; height:18px; color:#10B981;"></i>
+          </div>
+          <div class="admin-stats-num" style="color:#047857;">${approvedCount.toLocaleString()}</div>
+          <div style="font-size:0.78rem; color:#047857;">Active platform access</div>
+        </div>
+
+        <div class="admin-stats-card card-rejected">
+          <div style="display:flex; justify-content:space-between; align-items:center; color:#991B1B; font-size:0.85rem; font-weight:600;">
+            <span>Rejected Requests</span>
+            <i data-lucide="x-circle" style="width:18px; height:18px; color:#EF4444;"></i>
+          </div>
+          <div class="admin-stats-num" style="color:#B91C1C;">${rejectedCount.toLocaleString()}</div>
+          <div style="font-size:0.78rem; color:#B91C1C;">Declined registrations</div>
+        </div>
+
+        <div class="admin-stats-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; color:#475569; font-size:0.85rem; font-weight:600;">
+            <span>Suspended Students</span>
+            <i data-lucide="alert-octagon" style="width:18px; height:18px; color:#64748B;"></i>
+          </div>
+          <div class="admin-stats-num" style="color:#475569;">${suspendedCount.toLocaleString()}</div>
+          <div style="font-size:0.78rem; color:#64748B;">Access paused</div>
+        </div>
+      </div>
+
+      <!-- Pending Approval Requests Section -->
+      <div class="admin-table-card">
+        <div class="admin-table-header">
+          <div>
+            <h3 style="font-size:1.05rem; font-weight:700; color:#0F172A; display:flex; align-items:center; gap:8px;">
+              <i data-lucide="user-check" style="color:var(--accent); width:20px; height:20px;"></i>
+              Pending Approval Requests (${pendingStudents.length})
+            </h3>
+            <p style="font-size:0.8rem; color:#64748B; margin:2px 0 0 0;">
+              Students awaiting verification before they can access dashboard and study materials.
+            </p>
+          </div>
+          ${pendingStudents.length > 0 ? `
+            <button class="btn btn-sm btn-secondary" onclick="app.navigateAdmin('requests')">
+              View All Requests →
+            </button>
+          ` : ''}
+        </div>
+
+        ${pendingStudents.length === 0 ? `
+          <div style="padding:48px 24px; text-align:center; color:#64748B;">
+            <div style="width:52px; height:52px; border-radius:50%; background:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+              <i data-lucide="check" style="width:26px; height:26px;"></i>
+            </div>
+            <div style="font-weight:700; font-size:1rem; color:#0F172A;">All Caught Up!</div>
+            <p style="font-size:0.85rem; margin-top:4px;">No pending student registration requests at this time.</p>
+          </div>
+        ` : `
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Email Address</th>
+                  <th>Mobile</th>
+                  <th>Class</th>
+                  <th>NEET Year</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pendingStudents.slice(0, 5).map(s => `
+                  <tr>
+                    <td style="font-weight:700; color:#0F172A;">${s.full_name}</td>
+                    <td style="color:#475569;">${s.email}</td>
+                    <td style="color:#64748B;">${s.mobile || '—'}</td>
+                    <td><span class="badge" style="background:#F1F5F9; color:#334155;">${s.student_grade ? s.student_grade.replace('_', ' ') : '12th'}</span></td>
+                    <td style="color:#475569; font-weight:600;">${s.target_year || '2026'}</td>
+                    <td>
+                      <span class="status-badge-pill status-badge-pending">
+                        <span class="pulse-dot"></span> PENDING
+                      </span>
+                    </td>
+                    <td style="text-align:right; white-space:nowrap;">
+                      <button class="btn-action-sm btn-view-req" onclick="app.openStudentDetailModal('${s.id}')" title="View Details">
+                        <i data-lucide="eye" style="width:13px; height:13px;"></i> View
+                      </button>
+                      <button class="btn-action-sm btn-approve" onclick="app.openApproveConfirmModal('${s.id}')" title="Approve Student">
+                        <i data-lucide="check" style="width:13px; height:13px;"></i> Approve
+                      </button>
+                      <button class="btn-action-sm btn-reject" onclick="app.openRejectModal('${s.id}')" title="Reject Request">
+                        <i data-lucide="x" style="width:13px; height:13px;"></i> Reject
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+  },
+
+  renderApprovalRequestsTable(requests = [], searchQuery = '') {
+    const filtered = requests.filter(s => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+             (s.email && s.email.toLowerCase().includes(q)) ||
+             (s.mobile && s.mobile.includes(q));
+    });
+
+    return `
+      <div style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h1 style="font-size:1.5rem; font-weight:800; font-family:var(--font-display); color:#0F172A; margin-bottom:4px;">
+              Student Approval Requests
+            </h1>
+            <p style="color:#64748B; font-size:0.88rem;">
+              Review and authorize access for newly registered students. Only approved students can access the NEET prep portal.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-table-card">
+        <div class="admin-table-header">
+          <div class="admin-table-filters" style="width:100%;">
+            <div style="position:relative; flex:1; max-width:320px;">
+              <i data-lucide="search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#94A3B8;"></i>
+              <input type="text" class="admin-search-input" style="width:100%;" placeholder="Search by name, email or mobile..." value="${searchQuery}" oninput="app.onApprovalRequestsSearch(event)">
+            </div>
+            <span class="badge" style="background:#FFFBEB; color:#92400E; border:1px solid #FCD34D;">
+              ${filtered.length} Pending
+            </span>
+          </div>
+        </div>
+
+        ${filtered.length === 0 ? `
+          <div style="padding:48px 24px; text-align:center; color:#64748B;">
+            <div style="width:48px; height:48px; border-radius:50%; background:#F1F5F9; color:#64748B; display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+              <i data-lucide="inbox" style="width:24px; height:24px;"></i>
+            </div>
+            <div style="font-weight:700; color:#0F172A;">No Requests Found</div>
+            <p style="font-size:0.85rem; margin-top:4px;">No student registration requests match your filter.</p>
+          </div>
+        ` : `
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Mobile</th>
+                  <th>Class</th>
+                  <th>Target Year</th>
+                  <th>Registration Date</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(s => {
+                  const regDate = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+                  return `
+                    <tr>
+                      <td style="font-weight:700; color:#0F172A;">${s.full_name}</td>
+                      <td style="color:#475569;">${s.email}</td>
+                      <td style="color:#64748B;">${s.mobile || '—'}</td>
+                      <td><span class="badge" style="background:#F1F5F9; color:#334155;">${s.student_grade ? s.student_grade.replace('_', ' ') : '12'}</span></td>
+                      <td style="color:#475569; font-weight:600;">${s.target_year || '2026'}</td>
+                      <td style="color:#64748B; font-size:0.82rem;">${regDate}</td>
+                      <td>
+                        <span class="status-badge-pill status-badge-pending">
+                          <span class="pulse-dot"></span> PENDING
+                        </span>
+                      </td>
+                      <td style="text-align:right; white-space:nowrap;">
+                        <button class="btn-action-sm btn-view-req" onclick="app.openStudentDetailModal('${s.id}')" title="View Full Details">
+                          <i data-lucide="eye" style="width:13px; height:13px;"></i> View
+                        </button>
+                        <button class="btn-action-sm btn-approve" onclick="app.openApproveConfirmModal('${s.id}')" title="Approve Request">
+                          <i data-lucide="check" style="width:13px; height:13px;"></i> Approve
+                        </button>
+                        <button class="btn-action-sm btn-reject" onclick="app.openRejectModal('${s.id}')" title="Reject Request">
+                          <i data-lucide="x" style="width:13px; height:13px;"></i> Reject
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+  },
+
+  renderApprovalStudentsDirectory(students = [], activeFilter = 'all', searchQuery = '') {
+    const filtered = students.filter(s => {
+      if (activeFilter !== 'all' && (s.status || '').toUpperCase() !== activeFilter.toUpperCase()) {
+        return false;
+      }
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+             (s.email && s.email.toLowerCase().includes(q)) ||
+             (s.mobile && s.mobile.includes(q));
+    });
+
+    const getStatusPill = (status) => {
+      const st = (status || 'PENDING').toUpperCase();
+      if (st === 'APPROVED') {
+        return `<span class="status-badge-pill status-badge-approved"><i data-lucide="check" style="width:12px; height:12px;"></i> APPROVED</span>`;
+      } else if (st === 'PENDING') {
+        return `<span class="status-badge-pill status-badge-pending"><span class="pulse-dot"></span> PENDING</span>`;
+      } else if (st === 'REJECTED') {
+        return `<span class="status-badge-pill status-badge-rejected"><i data-lucide="x" style="width:12px; height:12px;"></i> REJECTED</span>`;
+      } else if (st === 'SUSPENDED') {
+        return `<span class="status-badge-pill status-badge-suspended"><i data-lucide="alert-octagon" style="width:12px; height:12px;"></i> SUSPENDED</span>`;
+      }
+      return `<span class="badge">${st}</span>`;
+    };
+
+    return `
+      <div style="margin-bottom:20px;">
+        <h1 style="font-size:1.5rem; font-weight:800; font-family:var(--font-display); color:#0F172A; margin-bottom:4px;">
+          Students Directory
+        </h1>
+        <p style="color:#64748B; font-size:0.88rem;">
+          Manage all registered aspirants, check account approval status, suspend or reactivate platform access.
+        </p>
+      </div>
+
+      <div class="admin-table-card">
+        <div class="admin-table-header">
+          <div class="admin-table-filters" style="width:100%; justify-content:space-between;">
+            <div style="position:relative; flex:1; max-width:300px;">
+              <i data-lucide="search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#94A3B8;"></i>
+              <input type="text" class="admin-search-input" style="width:100%;" placeholder="Search students..." value="${searchQuery}" oninput="app.onApprovalDirectorySearch(event)">
+            </div>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="filter-chip ${activeFilter === 'all' ? 'active' : ''}" onclick="app.setApprovalDirectoryFilter('all')">All</button>
+              <button class="filter-chip ${activeFilter === 'approved' ? 'active' : ''}" onclick="app.setApprovalDirectoryFilter('approved')">Approved</button>
+              <button class="filter-chip ${activeFilter === 'pending' ? 'active' : ''}" onclick="app.setApprovalDirectoryFilter('pending')">Pending</button>
+              <button class="filter-chip ${activeFilter === 'rejected' ? 'active' : ''}" onclick="app.setApprovalDirectoryFilter('rejected')">Rejected</button>
+              <button class="filter-chip ${activeFilter === 'suspended' ? 'active' : ''}" onclick="app.setApprovalDirectoryFilter('suspended')">Suspended</button>
+            </div>
+          </div>
+        </div>
+
+        ${filtered.length === 0 ? `
+          <div style="padding:48px 24px; text-align:center; color:#64748B;">
+            <div style="font-weight:700; color:#0F172A;">No Students Found</div>
+            <p style="font-size:0.85rem; margin-top:4px;">Try changing your search term or filter.</p>
+          </div>
+        ` : `
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Email</th>
+                  <th>Mobile</th>
+                  <th>Class</th>
+                  <th>Target</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(s => {
+                  const st = (s.status || 'PENDING').toUpperCase();
+                  return `
+                    <tr>
+                      <td>
+                        <div style="font-weight:700; color:#0F172A;">${s.full_name}</div>
+                        <div style="font-size:0.75rem; color:#94A3B8;">ID: ${s.id.substring(0, 8)}...</div>
+                      </td>
+                      <td style="color:#475569;">${s.email}</td>
+                      <td style="color:#64748B;">${s.mobile || '—'}</td>
+                      <td><span class="badge" style="background:#F1F5F9; color:#334155;">${s.student_grade ? s.student_grade.replace('_', ' ') : '12'}</span></td>
+                      <td style="color:#475569; font-weight:600;">${s.target_year || '2026'}</td>
+                      <td>${getStatusPill(s.status)}</td>
+                      <td style="text-align:right; white-space:nowrap;">
+                        <button class="btn-action-sm btn-view-req" onclick="app.openStudentDetailModal('${s.id}')" title="View Profile">
+                          <i data-lucide="eye" style="width:13px; height:13px;"></i> View
+                        </button>
+                        ${st === 'PENDING' ? `
+                          <button class="btn-action-sm btn-approve" onclick="app.openApproveConfirmModal('${s.id}')" title="Approve">
+                            <i data-lucide="check" style="width:13px; height:13px;"></i>
+                          </button>
+                          <button class="btn-action-sm btn-reject" onclick="app.openRejectModal('${s.id}')" title="Reject">
+                            <i data-lucide="x" style="width:13px; height:13px;"></i>
+                          </button>
+                        ` : ''}
+                        ${st === 'APPROVED' ? `
+                          <button class="btn-action-sm" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1;" onclick="app.openSuspendModal('${s.id}')" title="Suspend Access">
+                            <i data-lucide="slash" style="width:13px; height:13px;"></i> Suspend
+                          </button>
+                        ` : ''}
+                        ${st === 'SUSPENDED' ? `
+                          <button class="btn-action-sm btn-approve" onclick="app.handleReactivateStudent('${s.id}')" title="Reactivate Account">
+                            <i data-lucide="refresh-cw" style="width:13px; height:13px;"></i> Reactivate
+                          </button>
+                        ` : ''}
+                        ${st === 'REJECTED' ? `
+                          <button class="btn-action-sm btn-approve" onclick="app.openApproveConfirmModal('${s.id}')" title="Approve Request">
+                            <i data-lucide="check" style="width:13px; height:13px;"></i> Approve
+                          </button>
+                        ` : ''}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+  },
+
+  renderApprovalStudentDetail(student) {
+    const st = (student.status || 'PENDING').toUpperCase();
+    const regDate = student.created_at ? new Date(student.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const approvedDate = student.approved_at ? new Date(student.approved_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : null;
+    const rejectedDate = student.rejected_at ? new Date(student.rejected_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : null;
+    const suspendedDate = student.suspended_at ? new Date(student.suspended_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : null;
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1px solid #E2E8F0;">
+          <div>
+            <h4 style="font-size:1.15rem; font-weight:800; color:#0F172A; margin-bottom:2px;">${student.full_name}</h4>
+            <div style="font-size:0.82rem; color:#64748B;">Role: ${student.role || 'STUDENT'}</div>
+          </div>
+          <div>
+            ${st === 'APPROVED' ? `<span class="status-badge-pill status-badge-approved"><i data-lucide="check" style="width:12px; height:12px;"></i> APPROVED</span>` : ''}
+            ${st === 'PENDING' ? `<span class="status-badge-pill status-badge-pending"><span class="pulse-dot"></span> PENDING</span>` : ''}
+            ${st === 'REJECTED' ? `<span class="status-badge-pill status-badge-rejected"><i data-lucide="x" style="width:12px; height:12px;"></i> REJECTED</span>` : ''}
+            ${st === 'SUSPENDED' ? `<span class="status-badge-pill status-badge-suspended"><i data-lucide="alert-octagon" style="width:12px; height:12px;"></i> SUSPENDED</span>` : ''}
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.88rem;">
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">Email Address</div>
+            <div style="font-weight:600; color:#1E293B;">${student.email}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">Mobile Number</div>
+            <div style="font-weight:600; color:#1E293B;">${student.mobile || 'Not provided'}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">Class / Grade</div>
+            <div style="font-weight:600; color:#1E293B;">${student.student_grade ? student.student_grade.replace('_', ' ') : '12th'}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">NEET Target Year</div>
+            <div style="font-weight:600; color:#1E293B;">${student.target_year || '2026'}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">Registration Date</div>
+            <div style="font-weight:500; color:#334155;">${regDate}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:#64748B; font-weight:600; text-transform:uppercase;">Preferred Language</div>
+            <div style="font-weight:500; color:#334155;">${student.preferred_language || 'English'}</div>
+          </div>
+        </div>
+
+        <!-- Audit Trail Details -->
+        ${student.rejection_reason ? `
+          <div class="reason-box">
+            <div style="font-size:0.75rem; font-weight:700; color:#DC2626; text-transform:uppercase;">Rejection Reason:</div>
+            <div style="color:#1E293B; margin-top:2px;">${student.rejection_reason}</div>
+            ${rejectedDate ? `<div style="font-size:0.72rem; color:#64748B; margin-top:4px;">Rejected on: ${rejectedDate}</div>` : ''}
+          </div>
+        ` : ''}
+
+        ${student.suspension_reason ? `
+          <div class="reason-box" style="border-left-color:#64748B;">
+            <div style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase;">Suspension Reason:</div>
+            <div style="color:#1E293B; margin-top:2px;">${student.suspension_reason}</div>
+            ${suspendedDate ? `<div style="font-size:0.72rem; color:#64748B; margin-top:4px;">Suspended on: ${suspendedDate}</div>` : ''}
+          </div>
+        ` : ''}
+
+        ${approvedDate ? `
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:10px 14px; font-size:0.8rem; color:#166534;">
+            <i data-lucide="check-circle" style="width:14px; height:14px; display:inline; vertical-align:middle; color:#10B981;"></i>
+            Approved on: <strong>${approvedDate}</strong> ${student.approved_by ? `(by ${student.approved_by})` : ''}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  },
+
+  renderAdminAddQuestionForm(taxonomy = []) {
+    const subjects = taxonomy && taxonomy.length > 0 ? taxonomy.map(s => s.name) : ["Physics", "Chemistry", "Biology"];
+
+    return `
+      <div style="max-width:860px; margin:0 auto;">
+        <div style="margin-bottom:20px;">
+          <h1 style="font-size:1.5rem; font-weight:800; font-family:var(--font-display); color:#0F172A; margin-bottom:4px;">
+            Add Question to Practice & Test Series
+          </h1>
+          <p style="color:#64748B; font-size:0.88rem;">
+            Questions added here by Admin will immediately be published for approved students to practice and take in test series.
+          </p>
+        </div>
+
+        <div class="card" style="padding:28px 32px; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+          <form id="formAdminAddQuestion" onsubmit="app.handleAdminAddQuestionSubmit(event)">
+            <div class="auth-form-row" style="margin-bottom:14px;">
+              <div class="auth-field">
+                <label class="auth-label">Exam Level *</label>
+                <select id="adminQExamLevel" class="auth-select" required style="padding-left:14px;">
+                  <option value="NEET UG" selected>NEET UG</option>
+                  <option value="Class 11">Class 11</option>
+                  <option value="Class 12">Class 12</option>
+                  <option value="NEET PG">NEET PG</option>
+                </select>
+              </div>
+
+              <div class="auth-field">
+                <label class="auth-label">Subject *</label>
+                <select id="adminQSubject" class="auth-select" required style="padding-left:14px;">
+                  ${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="auth-form-row" style="margin-bottom:14px;">
+              <div class="auth-field">
+                <label class="auth-label">Chapter / Topic *</label>
+                <input type="text" id="adminQChapter" class="auth-input" style="padding-left:14px;" placeholder="e.g. Kinematics, Chemical Bonding, Human Physiology" required>
+              </div>
+
+              <div class="auth-field">
+                <label class="auth-label">Difficulty Level</label>
+                <select id="adminQDifficulty" class="auth-select" style="padding-left:14px;">
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM" selected>Medium</option>
+                  <option value="HARD">Hard (Advanced AIIMS / JIPMER Level)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="auth-field" style="margin-bottom:16px;">
+              <label class="auth-label">Question Statement *</label>
+              <textarea id="adminQText" rows="3" class="auth-input" style="padding:12px; width:100%; resize:vertical;" placeholder="Enter complete NEET problem statement..." required></textarea>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label class="auth-label" style="margin-bottom:8px;">Multiple Choice Options (Select the correct radio button) *</label>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                ${['A', 'B', 'C', 'D'].map((optKey, idx) => `
+                  <div style="display:flex; align-items:center; gap:10px; background:#F8FAFC; padding:8px 12px; border:1px solid #CBD5E1; border-radius:var(--radius-md);">
+                    <input type="radio" name="adminCorrectOption" value="${optKey}" ${idx === 0 ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;" title="Mark as correct answer">
+                    <span style="font-weight:700; width:24px; color:#1E293B;">(${optKey})</span>
+                    <input type="text" id="adminOpt${optKey}" class="auth-input" style="padding:8px 12px; background:#FFFFFF; flex:1;" placeholder="Option ${optKey} text..." required>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="auth-field" style="margin-bottom:20px;">
+              <label class="auth-label">Explanation & Step-by-Step Solution</label>
+              <textarea id="adminQExplanation" rows="3" class="auth-input" style="padding:12px; width:100%; resize:vertical;" placeholder="NCERT reference, formula, and step-by-step reasoning..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:12px;">
+              <button type="reset" class="btn btn-secondary">Clear Form</button>
+              <button type="submit" id="btnAdminAddQuestionSubmit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
+                <i data-lucide="plus-circle"></i> Publish Question to Portal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  },
+
+  renderAdminQuestionsRepository(questions = [], activeSubject = 'all', searchQuery = '') {
+    const filtered = questions.filter(q => {
+      if (activeSubject !== 'all') {
+        const sub = (q.subject_name || '').toLowerCase();
+        if (!sub.includes(activeSubject.toLowerCase())) return false;
+      }
+      if (!searchQuery) return true;
+      const term = searchQuery.toLowerCase();
+      return (q.question_text && q.question_text.toLowerCase().includes(term)) ||
+             (q.chapter_name && q.chapter_name.toLowerCase().includes(term)) ||
+             (q.subject_name && q.subject_name.toLowerCase().includes(term));
+    });
+
+    return `
+      <div style="margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h1 style="font-size:1.6rem; font-weight:800; font-family:var(--font-display); color:#0F172A; margin-bottom:4px;">
+              Question Repository & Management
+            </h1>
+            <p style="color:#64748B; font-size:0.9rem;">
+              Admin question database for student study and practice. Share questions directly with students or publish to test series.
+            </p>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="app.navigateAdmin('addQuestion')" style="display:flex; align-items:center; gap:6px;">
+              <i data-lucide="plus-circle"></i> Add New Question
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Bar -->
+      <div class="admin-table-card" style="margin-bottom:20px; padding:16px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:0.82rem; font-weight:700; color:#475569; margin-right:4px;">Subject:</span>
+            <button class="filter-chip ${activeSubject === 'all' ? 'active' : ''}" onclick="app.setAdminQuestionSubjectFilter('all')">All (${questions.length})</button>
+            <button class="filter-chip ${activeSubject === 'biology' ? 'active' : ''}" onclick="app.setAdminQuestionSubjectFilter('biology')">Biology</button>
+            <button class="filter-chip ${activeSubject === 'chemistry' ? 'active' : ''}" onclick="app.setAdminQuestionSubjectFilter('chemistry')">Chemistry</button>
+            <button class="filter-chip ${activeSubject === 'physics' ? 'active' : ''}" onclick="app.setAdminQuestionSubjectFilter('physics')">Physics</button>
+          </div>
+          <div style="position:relative; width:100%; max-width:320px;">
+            <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#94A3B8;"></i>
+            <input type="text" class="admin-search-input" style="width:100%; padding-left:36px;" placeholder="Search question or chapter..." value="${searchQuery}" oninput="app.onAdminQuestionSearch(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions List -->
+      ${filtered.length === 0 ? `
+        <div class="card" style="padding:48px 24px; text-align:center; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-lg);">
+          <div style="width:52px; height:52px; border-radius:50%; background:#F1F5F9; color:#64748B; display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;">
+            <i data-lucide="inbox" style="width:28px; height:28px;"></i>
+          </div>
+          <div style="font-weight:700; font-size:1.1rem; color:#0F172A;">No Questions Found</div>
+          <p style="font-size:0.88rem; color:#64748B; margin-top:4px;">Try another search term or click "Add New Question" above.</p>
+        </div>
+      ` : `
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          ${filtered.map((q, idx) => {
+            const sub = (q.subject_name || 'General').toLowerCase();
+            const subBadgeColor = sub.includes('bio') ? '#059669' : (sub.includes('chem') ? '#D97706' : '#2563EB');
+            const subBadgeBg = sub.includes('bio') ? '#ECFDF5' : (sub.includes('chem') ? '#FFFBEB' : '#EFF6FF');
+            return `
+              <div class="card" style="padding:20px 24px; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span style="font-weight:800; font-size:0.85rem; color:#64748B;">#${idx + 1}</span>
+                    <span class="badge" style="background:${subBadgeBg}; color:${subBadgeColor}; font-weight:700; border:1px solid ${subBadgeColor}33;">
+                      ${q.subject_name || 'Biology'}
+                    </span>
+                    <span class="badge" style="background:#F8FAFC; color:#334155; border:1px solid #CBD5E1; font-weight:600;">
+                      ${q.chapter_name || 'General Practice'}
+                    </span>
+                    <span class="badge" style="background:#F1F5F9; color:#475569; font-size:0.75rem;">
+                      ${q.exam_level || 'NEET UG'}
+                    </span>
+                    <span class="badge badge-accent" style="font-size:0.75rem;">
+                      ${q.difficulty || 'MEDIUM'}
+                    </span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="app.handleAdminShareQuestion('${q.id}', '${q.share_token || ''}')" style="display:flex; align-items:center; gap:5px; padding:5px 12px; font-size:0.8rem; font-weight:700;">
+                      <i data-lucide="share-2" style="width:13px; height:13px;"></i> Share Question
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="app.handleOpenSharedQuestion('${q.share_token || ''}')" style="display:flex; align-items:center; gap:5px; padding:5px 10px; font-size:0.8rem;">
+                      <i data-lucide="eye" style="width:13px; height:13px;"></i> Preview Card
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Question Text -->
+                <div style="font-size:1rem; font-weight:600; color:#0F172A; line-height:1.5; margin-bottom:14px;">
+                  ${q.question_text}
+                </div>
+
+                <!-- 4 Options Grid -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:10px; margin-bottom:14px;">
+                  ${(q.options || []).map(opt => `
+                    <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; font-size:0.88rem; ${opt.is_correct ? 'background:#F0FDF4; border:1px solid #86EFAC; color:#166534; font-weight:600;' : 'background:#F8FAFC; border:1px solid #E2E8F0; color:#334155;'}">
+                      <span style="font-weight:700; width:22px; ${opt.is_correct ? 'color:#15803D;' : 'color:#64748B;'}">(${opt.option_key})</span>
+                      <span style="flex:1;">${opt.option_text}</span>
+                      ${opt.is_correct ? `<span style="font-size:0.72rem; background:#DCFCE7; color:#15803D; padding:2px 8px; border-radius:4px; font-weight:700;">CORRECT ANSWER</span>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- Explanation / Solution -->
+                ${q.explanation ? `
+                  <div style="background:#F8FAFC; border-left:3px solid #0284C7; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:12px;">
+                    <div style="font-size:0.75rem; font-weight:700; color:#0284C7; text-transform:uppercase; margin-bottom:2px;">Step-by-Step Solution & NCERT Reference:</div>
+                    <div style="font-size:0.85rem; color:#334155; line-height:1.5;">${q.explanation}</div>
+                  </div>
+                ` : ''}
+
+                <!-- Status & Availability -->
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #F1F5F9; padding-top:10px; font-size:0.78rem; color:#64748B;">
+                  <span style="display:flex; align-items:center; gap:5px; color:#059669; font-weight:600;">
+                    <i data-lucide="check-circle" style="width:14px; height:14px;"></i> Available in Student Practice &amp; Test Series
+                  </span>
+                  <span>Share Token: <code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#0F172A;">${q.share_token || 'N/A'}</code></span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `}
+    `;
   }
 };
+

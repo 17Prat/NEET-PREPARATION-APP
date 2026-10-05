@@ -57,8 +57,88 @@ class ApiClient {
     });
   }
 
+  register(studentData) {
+    return this.request('/api/v1/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(studentData),
+    });
+  }
+
+  checkStatus(email) {
+    return this.request(`/api/v1/auth/status?email=${encodeURIComponent(email)}`);
+  }
+
   getProfile() {
     return this.request('/api/v1/auth/me');
+  }
+
+  // --- Admin Auth & Approval System Endpoints ---
+  adminLogin(email, password) {
+    return this.request('/api/v1/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  getAdminApprovalStats() {
+    return this.request('/api/v1/admin/stats');
+  }
+
+  getAdminApprovalStudents(status = null, search = null) {
+    let url = '/api/v1/admin/students';
+    const params = [];
+    if (status && status !== 'all') params.push(`status=${encodeURIComponent(status)}`);
+    if (search && search.trim()) params.push(`search=${encodeURIComponent(search.trim())}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return this.request(url);
+  }
+
+  getAdminStudentDetails(id) {
+    return this.request(`/api/v1/admin/students/${id}`);
+  }
+
+  approveStudent(id) {
+    return this.request(`/api/v1/admin/students/${id}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    });
+  }
+
+  rejectStudent(id, reason) {
+    return this.request(`/api/v1/admin/students/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason: reason || "Registration criteria not met." }),
+    });
+  }
+
+  suspendStudent(id, reason) {
+    return this.request(`/api/v1/admin/students/${id}/suspend`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason: reason || "Administrative suspension." }),
+    });
+  }
+
+  reactivateStudent(id) {
+    return this.request(`/api/v1/admin/students/${id}/reactivate`, {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    });
+  }
+
+  getAdminQuestionsList(subjectId = null, search = null) {
+    let url = '/api/v1/admin/questions';
+    const params = [];
+    if (subjectId && subjectId !== 'all') params.push(`subject_id=${subjectId}`);
+    if (search && search.trim()) params.push(`search=${encodeURIComponent(search.trim())}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return this.request(url);
+  }
+
+  shareAdminQuestion(questionId) {
+    return this.request(`/api/v1/admin/questions/${questionId}/share`, {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
   }
 
   // --- Taxonomy & Practice ---

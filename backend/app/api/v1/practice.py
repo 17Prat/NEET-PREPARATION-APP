@@ -8,7 +8,7 @@ from backend.app.models.bookmark import Bookmark
 from backend.app.models.mistake import UserMistake
 from backend.app.models.user import User
 from backend.app.schemas.question import QuestionOut, PracticeSubmitIn, PracticeResultOut
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_current_user, get_approved_student
 
 router = APIRouter(prefix="/practice", tags=["Practice"])
 
@@ -18,7 +18,7 @@ def get_practice_questions(
     difficulty: Optional[str] = Query(None),
     year: Optional[int] = Query(None),
     pyq_only: Optional[bool] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     query = db.query(Question).filter(Question.is_active == True)
@@ -121,7 +121,7 @@ def ask_doubt_endpoint(
 @router.post("/submit-answer", response_model=PracticeResultOut)
 def submit_practice_answer(
     data: PracticeSubmitIn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     question = db.query(Question).filter(Question.id == data.question_id).first()

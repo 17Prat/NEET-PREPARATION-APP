@@ -23,53 +23,412 @@
   <link rel="stylesheet" href="/static/css/style.css?v=3.8">
 </head>
 <body class="medconnect-theme">
-  <!-- Main Application Wrapper -->
-  <div id="app" class="app-layout">
+
+  <!-- ========================================== -->
+  <!-- Dedicated Authentication & Approval Container -->
+  <!-- ========================================== -->
+  <div id="authContainer" class="auth-overlay">
+    
+    <!-- View 1: Student Login (First screen on load) -->
+    <div id="authViewLogin" class="auth-card">
+      <div class="auth-header">
+        <div class="auth-brand-icon" style="width: auto; height: auto; margin-bottom: 10px;">
+          <!-- Authentic MedicQube 3D Medical Logo -->
+          <img src="/static/assets/medicqube_logo.png" alt="MedicQube Logo" style="width: 108px; height: 108px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(2, 132, 199, 0.25)); border-radius: 18px;">
+        </div>
+        <h2 class="auth-title" style="font-size: 1.85rem; font-family: var(--font-display); letter-spacing: -0.5px; margin-bottom: 3px;">Medic<span style="color:#0284C7;">Qube</span></h2>
+        <p class="auth-subtitle" style="font-size: 0.95rem; font-weight: 700; color: #0284C7; letter-spacing: 0.2px;">Prepare. Practice. Perform.</p>
+        <p style="font-size: 0.8rem; color: #64748B; margin-top: 3px;">NEET UG Preparation & Diagnostic Platform</p>
+      </div>
+
+      <div id="loginErrorAlert" class="auth-error-alert" style="display:none; margin-bottom:14px;"></div>
+
+      <!-- Quick Demo Testing Logins Helper Card -->
+      <div style="margin: 0 0 16px 0; padding: 12px 14px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md);">
+        <div style="font-weight: 700; color: #166534; font-size: 0.82rem; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <span>⚡ Demo Testing Logins</span>
+          <span style="font-size: 0.72rem; background: #DCFCE7; color: #15803D; padding: 2px 7px; border-radius: 4px; font-weight: 600;">1-Click Fill</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" id="btnQuickFillStudent" class="btn btn-sm" onclick="app.quickFillStudent()" style="flex: 1; padding: 6px 8px; font-size: 0.78rem; background: #FFFFFF; border: 1px solid #86EFAC; color: #15803D; border-radius: 6px; font-weight: 700; cursor:pointer;" title="Fill student credentials">
+            👨‍🎓 Student Demo
+          </button>
+          <button type="button" id="btnQuickFillAdmin" class="btn btn-sm" onclick="app.quickFillAdmin()" style="flex: 1; padding: 6px 8px; font-size: 0.78rem; background: #0F172A; border: none; color: #38BDF8; border-radius: 6px; font-weight: 700; cursor:pointer;" title="Go to admin login and fill admin credentials">
+            🛡️ Admin Demo
+          </button>
+          <button type="button" id="btnQuickFillPending" class="btn btn-sm" onclick="app.quickFillPending()" style="flex: 1; padding: 6px 8px; font-size: 0.78rem; background: #FEF3C7; border: 1px solid #FCD34D; color: #B45309; border-radius: 6px; font-weight: 700; cursor:pointer;" title="Fill pending student credentials to test approval wait">
+            ⏳ Pending Demo
+          </button>
+        </div>
+        <div style="margin-top: 8px; font-size: 0.72rem; color: #475569; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+          <span><strong>Student:</strong> student@medicqube.com / student123</span>
+          <span><strong>Admin:</strong> admin@medicqube.com / admin123</span>
+        </div>
+      </div>
+
+      <form id="formStudentLogin" onsubmit="app.handleLoginSubmit(event)" class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label" for="loginEmailMobile">Email / Mobile</label>
+          <div class="auth-input-group">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input type="text" id="loginEmailMobile" class="auth-input" value="student@medicqube.com" placeholder="student@medicqube.com or mobile" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label" for="loginPassword">
+            <span>Password</span>
+            <a href="javascript:void(0)" onclick="app.showForgotPasswordPrompt()" class="auth-link" style="font-size:0.78rem;">Forgot Password?</a>
+          </label>
+          <div class="auth-input-group">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input type="password" id="loginPassword" class="auth-input" value="student123" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="toggle-pw-btn" onclick="app.togglePasswordVisibility('loginPassword', this)" title="Show/Hide Password">
+              <i data-lucide="eye" style="width:16px; height:16px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="auth-btn-primary">
+          <span>LOGIN</span>
+        </button>
+      </form>
+
+      <div class="auth-footer-links">
+        <div>
+          Don't have an account? 
+          <a href="javascript:void(0)" id="linkCreateAccount" onclick="app.showRegisterScreen()" class="auth-link" style="font-weight:700; font-size:0.92rem;">Create Account</a>
+        </div>
+        <div style="margin-top:8px; padding-top:10px; border-top:1px dashed #E2E8F0;">
+          <a href="javascript:void(0)" id="linkAdminLogin" onclick="app.showAdminLoginScreen()" class="auth-link" style="color:#0F172A; font-weight:700; font-size:0.86rem; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="shield" style="width:14px; height:14px; color:#2563EB;"></i> Admin Portal Login
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 2: Student Registration -->
+    <div id="authViewRegister" class="auth-card" style="display:none; max-width:520px;">
+      <div class="auth-header">
+        <div class="auth-brand-icon" style="width: auto; height: auto; margin-bottom: 8px;">
+          <img src="/static/assets/medicqube_logo.png" alt="MedicQube Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 12px;">
+        </div>
+        <h2 class="auth-title">Create Student Account</h2>
+        <p class="auth-subtitle" style="font-weight: 700; color: #0284C7;">MedicQube — Prepare. Practice. Perform.</p>
+        <p style="font-size: 0.8rem; color: #64748B; margin-top: 2px;">Register for admin verification & access</p>
+      </div>
+
+      <div id="registerErrorAlert" class="auth-error-alert" style="display:none; margin-bottom:14px;"></div>
+
+      <form id="formStudentRegister" onsubmit="app.handleRegisterSubmit(event)" class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label" for="regFullName">Full Name *</label>
+          <div class="auth-input-group">
+            <i data-lucide="user" class="input-icon"></i>
+            <input type="text" id="regFullName" class="auth-input" placeholder="e.g. Rahul Sharma" required>
+          </div>
+        </div>
+
+        <div class="auth-form-row">
+          <div class="auth-field">
+            <label class="auth-label" for="regEmail">Email Address *</label>
+            <div class="auth-input-group">
+              <i data-lucide="mail" class="input-icon"></i>
+              <input type="email" id="regEmail" class="auth-input" placeholder="rahul@example.com" required>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="regMobile">Mobile Number *</label>
+            <div class="auth-input-group">
+              <i data-lucide="phone" class="input-icon"></i>
+              <input type="tel" id="regMobile" class="auth-input" placeholder="9876543210" pattern="[0-9]{10}" title="10-digit mobile number" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form-row">
+          <div class="auth-field">
+            <label class="auth-label" for="regPassword">Password *</label>
+            <div class="auth-input-group">
+              <i data-lucide="lock" class="input-icon"></i>
+              <input type="password" id="regPassword" class="auth-input" placeholder="Min 6 characters" minlength="6" required>
+              <button type="button" class="toggle-pw-btn" onclick="app.togglePasswordVisibility('regPassword', this)">
+                <i data-lucide="eye" style="width:16px; height:16px;"></i>
+              </button>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="regConfirmPassword">Confirm Password *</label>
+            <div class="auth-input-group">
+              <i data-lucide="shield-check" class="input-icon"></i>
+              <input type="password" id="regConfirmPassword" class="auth-input" placeholder="Re-enter password" minlength="6" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form-row">
+          <div class="auth-field">
+            <label class="auth-label" for="regClass">Class *</label>
+            <div class="auth-input-group">
+              <i data-lucide="graduation-cap" class="input-icon"></i>
+              <select id="regClass" class="auth-select" required>
+                <option value="">Select Class</option>
+                <option value="11">Class 11</option>
+                <option value="12" selected>Class 12</option>
+                <option value="Repeater">Dropper / Repeat</option>
+              </select>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="regTargetYear">NEET Target Year *</label>
+            <div class="auth-input-group">
+              <i data-lucide="calendar" class="input-icon"></i>
+              <select id="regTargetYear" class="auth-select" required>
+                <option value="">Select Year</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label" for="regLanguage">Preferred Language</label>
+          <div class="auth-input-group">
+            <i data-lucide="languages" class="input-icon"></i>
+            <select id="regLanguage" class="auth-select">
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Hinglish">Hinglish</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="auth-btn-primary">
+          <span>CREATE ACCOUNT</span>
+        </button>
+      </form>
+
+      <div class="auth-footer-links">
+        <div>
+          Already have an account? 
+          <a href="javascript:void(0)" onclick="app.showLoginScreen()" class="auth-link">Back to Login</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 3: Registration Success / Approval Pending -->
+    <div id="authViewPending" class="auth-card" style="display:none; text-align:center;">
+      <div class="status-hero-icon status-icon-pending">
+        <i data-lucide="clock" style="width:36px; height:36px;"></i>
+      </div>
+
+      <h2 class="auth-title">Account Created Successfully</h2>
+      <p class="auth-subtitle" style="margin-top:6px;">
+        Your registration request has been submitted for admin approval.
+      </p>
+
+      <div style="margin:20px 0; padding:16px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:var(--radius-md);">
+        <div style="font-size:0.78rem; color:#92400E; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Status</div>
+        <div class="status-badge-pill status-badge-pending" style="margin:8px auto;">
+          <span class="pulse-dot"></span> Pending Approval
+        </div>
+        <div style="font-size:0.8rem; color:#475569; margin-top:6px;">Registered Email:</div>
+        <div id="pendingEmailDisplay" style="font-weight:700; color:#0F172A; font-size:0.92rem;">student@example.com</div>
+      </div>
+
+      <p style="font-size:0.86rem; color:#64748B; line-height:1.6; margin-bottom:20px;">
+        You will be able to access the NEET preparation platform after your account is approved.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button type="button" id="btnCheckApprovalStatus" onclick="app.handleCheckApprovalStatus()" class="auth-btn-primary">
+          <i data-lucide="refresh-cw" style="width:16px; height:16px;"></i>
+          <span>Check Approval Status</span>
+        </button>
+        <button type="button" onclick="app.handleLogout()" class="auth-btn-secondary">
+          <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+          <span>Back to Login</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- View 4: Registration Rejected -->
+    <div id="authViewRejected" class="auth-card" style="display:none; text-align:center;">
+      <div class="status-hero-icon status-icon-rejected">
+        <i data-lucide="x-circle" style="width:36px; height:36px;"></i>
+      </div>
+
+      <h2 class="auth-title" style="color:#DC2626;">Access Not Approved</h2>
+      <p class="auth-subtitle" style="margin-top:6px;">
+        Your registration request was not approved.
+      </p>
+
+      <div class="reason-box">
+        <div style="font-size:0.75rem; font-weight:700; color:#DC2626; text-transform:uppercase; margin-bottom:4px;">Reason:</div>
+        <div id="rejectedReasonDisplay" style="font-size:0.88rem; color:#1E293B;">Registration could not be validated.</div>
+      </div>
+
+      <p style="font-size:0.85rem; color:#64748B; margin:16px 0;">
+        Please contact the administrator or submit a new request if permitted.
+      </p>
+
+      <button type="button" onclick="app.handleLogout()" class="auth-btn-secondary">
+        <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+        <span>Back to Login</span>
+      </button>
+    </div>
+
+    <!-- View 5: Account Suspended -->
+    <div id="authViewSuspended" class="auth-card" style="display:none; text-align:center;">
+      <div class="status-hero-icon status-icon-suspended">
+        <i data-lucide="alert-octagon" style="width:36px; height:36px;"></i>
+      </div>
+
+      <h2 class="auth-title" style="color:#475569;">Account Suspended</h2>
+      <p class="auth-subtitle" style="margin-top:6px;">
+        Your account has been suspended.
+      </p>
+
+      <div class="reason-box" style="border-left-color:#64748B;">
+        <div style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:4px;">Reason:</div>
+        <div id="suspendedReasonDisplay" style="font-size:0.88rem; color:#1E293B;">Account is temporarily suspended.</div>
+      </div>
+
+      <p style="font-size:0.85rem; color:#64748B; margin:16px 0;">
+        Please contact the administrator for further details.
+      </p>
+
+      <button type="button" onclick="app.handleLogout()" class="auth-btn-secondary">
+        <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+        <span>Back to Login</span>
+      </button>
+    </div>
+
+    <!-- View 6: Admin Portal Login -->
+    <div id="authViewAdminLogin" class="auth-card" style="display:none;">
+      <div class="auth-header">
+        <div class="auth-brand-icon" style="width: auto; height: auto; margin-bottom: 8px;">
+          <img src="/static/assets/medicqube_logo.png" alt="MedicQube Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 12px;">
+        </div>
+        <h2 class="auth-title">Admin Portal Login</h2>
+        <p class="auth-subtitle" style="font-weight: 700; color: #0284C7;">MedicQube Command Center</p>
+        <p style="font-size: 0.8rem; color: #64748B; margin-top: 2px;">Authorized Administrator Access Only</p>
+      </div>
+
+      <div id="adminLoginErrorAlert" class="auth-error-alert" style="display:none; margin-bottom:14px;"></div>
+
+      <form id="formAdminLogin" onsubmit="app.handleAdminLoginSubmit(event)" class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label" for="adminEmail">Email</label>
+          <div class="auth-input-group">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input type="email" id="adminEmail" class="auth-input" value="admin@medicqube.com" placeholder="admin@medicqube.com" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label" for="adminPassword">Password</label>
+          <div class="auth-input-group">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input type="password" id="adminPassword" class="auth-input" value="admin123" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="toggle-pw-btn" onclick="app.togglePasswordVisibility('adminPassword', this)">
+              <i data-lucide="eye" style="width:16px; height:16px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnAdminLoginSubmit" class="auth-btn-primary" style="background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+          <span>LOGIN TO ADMIN PORTAL</span>
+        </button>
+      </form>
+
+      <div class="auth-footer-links">
+        <a href="javascript:void(0)" id="linkAdminBackToLogin" onclick="app.showLoginScreen()" class="auth-link">
+          ← Back to Student Login
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- Dedicated Protected Admin Portal Container -->
+  <!-- ========================================== -->
+  <div id="adminPortalContainer" style="display:none; min-height:100vh; background:#F8FAFC;">
+    <header class="admin-navbar">
+      <div class="admin-nav-left">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="/static/assets/medicqube_logo.png" alt="MedicQube Logo" style="width:28px; height:28px; object-fit:contain; border-radius:6px; background:#fff; padding:2px;">
+          <span style="font-weight:800; font-size:1.1rem; letter-spacing:-0.4px; font-family:var(--font-display); color:#F8FAFC;">
+            Medic<span style="color:#38BDF8;">Qube</span> <span style="font-size:0.7rem; background:#1E3A8A; color:#93C5FD; padding:2px 7px; border-radius:4px; margin-left:4px; font-weight:700;">ADMIN</span>
+          </span>
+        </div>
+
+        <nav class="admin-nav-links">
+          <button class="admin-nav-tab active" data-admin-tab="dashboard" onclick="app.navigateAdmin('dashboard')">
+            <i data-lucide="layout-dashboard" style="width:15px; height:15px;"></i>
+            <span>Dashboard</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="requests" onclick="app.navigateAdmin('requests')">
+            <i data-lucide="user-check" style="width:15px; height:15px;"></i>
+            <span>Student Requests</span>
+            <span class="admin-badge-count" id="adminPendingCountBadge" style="display:none;">0</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="students" onclick="app.navigateAdmin('students')">
+            <i data-lucide="users" style="width:15px; height:15px;"></i>
+            <span>Students</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="approved" onclick="app.navigateAdmin('approved')">
+            <i data-lucide="check-circle" style="width:15px; height:15px; color:#10B981;"></i>
+            <span>Approved</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="rejected" onclick="app.navigateAdmin('rejected')">
+            <i data-lucide="x-circle" style="width:15px; height:15px; color:#EF4444;"></i>
+            <span>Rejected</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="suspended" onclick="app.navigateAdmin('suspended')">
+            <i data-lucide="alert-octagon" style="width:15px; height:15px; color:#64748B;"></i>
+            <span>Suspended</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="questions" onclick="app.navigateAdmin('questions')">
+            <i data-lucide="help-circle" style="width:15px; height:15px; color:#38BDF8;"></i>
+            <span>Question Repository</span>
+          </button>
+          <button class="admin-nav-tab" data-admin-tab="addQuestion" onclick="app.navigateAdmin('addQuestion')">
+            <i data-lucide="plus-circle" style="width:15px; height:15px; color:#10B981;"></i>
+            <span>Add Question</span>
+          </button>
+        </nav>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button type="button" class="btn btn-sm" id="btnAdminToStudentApp" onclick="app.showStudentPortal(); app.navigate('dashboard');" style="background:#0284C7; color:#F8FAFC; border:none; padding:6px 14px; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; gap:6px; font-weight:700; cursor:pointer;" title="Switch to Student Web Platform">
+          <i data-lucide="external-link" style="width:14px; height:14px;"></i> View Student Website
+        </button>
+        <span id="adminProfileName" style="font-size:0.84rem; color:#94A3B8; font-weight:600;">Admin</span>
+        <button class="btn btn-sm" onclick="app.handleLogout()" style="background:#1E293B; color:#F8FAFC; border:1px solid #334155; padding:5px 12px; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
+          <i data-lucide="log-out" style="width:13px; height:13px;"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-container" id="adminMainContent">
+      <!-- Admin Content dynamically rendered via JS -->
+    </main>
+  </div>
+
+  <!-- Main Application Wrapper (Student Website) -->
+  <div id="app" class="app-layout" style="display:none;">
     
     <!-- Top Navigation Header -->
     <header class="navbar">
-      <div class="nav-brand" onclick="app.navigate('dashboard')" title="Medicqube — Home">
-        <div class="brand-icon" style="background:transparent; box-shadow:none; width:44px; height:44px;">
-          <!-- Medicqube 3D Isometric Medical Cube Logo -->
-          <svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="mqNavTop" x1="12" y1="8" x2="52" y2="30" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#38BDF8"/>
-                <stop offset="100%" stop-color="#0284C7"/>
-              </linearGradient>
-              <linearGradient id="mqNavLeft" x1="12" y1="19" x2="32" y2="55" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#1E3A8A"/>
-                <stop offset="100%" stop-color="#0B132B"/>
-              </linearGradient>
-              <linearGradient id="mqNavRight" x1="32" y1="31" x2="52" y2="55" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#2563EB"/>
-                <stop offset="100%" stop-color="#1D4ED8"/>
-              </linearGradient>
-              <linearGradient id="mqNavCross" x1="20" y1="16" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FFFFFF"/>
-                <stop offset="100%" stop-color="#E0F2FE"/>
-              </linearGradient>
-              <filter id="mqNavGlow" x="4" y="4" width="56" height="56" filterUnits="userSpaceOnUse">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0284C7" flood-opacity="0.45"/>
-              </filter>
-            </defs>
-            <g filter="url(#mqNavGlow)">
-              <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" fill="url(#mqNavTop)"/>
-              <path d="M12 19.5L32 31V54.5L12 43V19.5Z" fill="url(#mqNavLeft)"/>
-              <path d="M32 31L52 19.5V43L32 54.5V31Z" fill="url(#mqNavRight)"/>
-              <path d="M32 8L52 19.5L32 31L12 19.5L32 8Z" stroke="#7DD3FC" stroke-width="1.2" stroke-linejoin="round" stroke-opacity="0.6"/>
-              <path d="M12 19.5V43L32 54.5V31" stroke="#38BDF8" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.4"/>
-              <path d="M52 19.5V43L32 54.5" stroke="#60A5FA" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.5"/>
-              <rect x="28.5" y="19.5" width="7" height="23" rx="3.5" fill="url(#mqNavCross)"/>
-              <rect x="20.5" y="27.5" width="23" height="7" rx="3.5" fill="url(#mqNavCross)"/>
-              <circle cx="32" cy="31" r="3.2" fill="#0284C7"/>
-              <circle cx="32" cy="31" r="1.5" fill="#38BDF8"/>
-            </g>
-          </svg>
-        </div>
+      <div class="nav-brand" onclick="app.navigate('dashboard')" title="MedicQube — Prepare. Practice. Perform." style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+        <img src="/static/assets/medicqube_logo.png" alt="MedicQube Logo" style="width:38px; height:38px; object-fit:contain; border-radius:8px;">
         <div class="brand-text">
-          <span class="brand-title">Medic<span class="text-accent">qube</span></span>
-          <span class="brand-tagline">NEET Practice & Assessment</span>
+          <span class="brand-title">Medic<span class="text-accent">Qube</span></span>
+          <span class="brand-tagline">Prepare. Practice. Perform.</span>
         </div>
       </div>
 
@@ -89,16 +448,13 @@
         <button class="nav-btn" data-tab="bookmarks" onclick="app.navigate('bookmarks')">
           <i data-lucide="bookmark"></i> <span>Saved Questions</span>
         </button>
-        <button class="nav-btn" data-tab="admin" onclick="app.navigate('admin')">
-          <i data-lucide="shield"></i> <span>Admin</span>
-        </button>
       </nav>
 
       <div class="nav-actions">
-        <!-- Prominent Quick Action: Add Question to Practice & Test Series -->
-        <button class="btn btn-primary btn-sm header-add-btn" id="btnHeaderAddQuestion" onclick="app.openSaveQuestionModal()" title="Add your questions to Practice & Test Series" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:10px; padding:7px 15px; background:linear-gradient(135deg, #10B981 0%, #059669 100%); border:none; box-shadow:0 3px 12px rgba(16,185,129,0.35); color:#fff; cursor:pointer;">
-          <i data-lucide="plus-circle" style="width:16px; height:16px;"></i>
-          <span>+ Add Question</span>
+        <!-- Admin Panel Switcher Button -->
+        <button type="button" class="btn btn-sm" id="navBtnAdminPortal" onclick="app.showAdminPortal()" style="display:flex; align-items:center; gap:6px; background:#0F172A; color:#38BDF8; border:1px solid #1E293B; border-radius:6px; font-weight:700; padding:6px 12px; font-size:0.82rem; cursor:pointer;" title="Open Admin Command Center">
+          <i data-lucide="shield" style="width:14px; height:14px; color:#38BDF8;"></i>
+          <span>Admin Panel</span>
         </button>
 
         <div class="courses-menu-container">
@@ -205,9 +561,10 @@
         <span>Analysis</span>
       </button>
     </nav>
+  </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="toast-container"></div>
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
 
     <!-- Instructions Modal for Starting a Test -->
     <div id="modalInstructions" class="modal-overlay">
@@ -1210,6 +1567,16 @@ Exp: Mitochondria generate cellular ATP.</pre>
               <i data-lucide="clipboard-copy"></i> Copy Text
             </button>
           </div>
+
+          <!-- Social Share Direct Buttons -->
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button type="button" class="btn btn-sm" style="flex:1; background:#25D366; color:#fff; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="app.shareToWhatsApp()">
+              <i data-lucide="message-circle" style="width:15px; height:15px;"></i> Share to WhatsApp
+            </button>
+            <button type="button" class="btn btn-sm" style="flex:1; background:#0088cc; color:#fff; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="app.shareToTelegram()">
+              <i data-lucide="send" style="width:15px; height:15px;"></i> Share to Telegram
+            </button>
+          </div>
         </div>
         <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
           <button type="button" class="btn btn-secondary" onclick="app.closeShareModal()">Done</button>
@@ -1244,7 +1611,99 @@ Exp: Mitochondria generate cellular ATP.</pre>
       </div>
     </div>
 
-  </div>
+    <!-- ========================================== -->
+    <!-- Admin Action Modals -->
+    <!-- ========================================== -->
+
+    <!-- Modal 1: Student Request Detail Modal -->
+    <div id="modalStudentDetail" class="modal-overlay" onclick="if(event.target === this) app.closeStudentDetailModal()">
+      <div class="modal-card" style="max-width: 540px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-accent" id="detailModalBadge">STUDENT REQUEST</span>
+            <h3 style="margin-top:2px;">Student Registration Details</h3>
+          </div>
+          <button class="modal-close" onclick="app.closeStudentDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="studentDetailModalBody" style="padding: 20px 24px;">
+          <!-- Dynamically populated -->
+        </div>
+        <div class="modal-footer" id="studentDetailModalFooter" style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeStudentDetailModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Confirm Approve Modal -->
+    <div id="modalApproveConfirm" class="modal-overlay" onclick="if(event.target === this) app.closeApproveConfirmModal()">
+      <div class="modal-card" style="max-width: 440px; text-align:center;">
+        <div style="width:56px; height:56px; border-radius:50%; background:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center; margin:10px auto 16px auto;">
+          <i data-lucide="user-check" style="width:28px; height:28px;"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:700; color:#0F172A; margin-bottom:8px;">Approve Student?</h3>
+        <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:20px;" id="approveConfirmStudentName">
+          Are you sure you want to approve this student? Once approved, they will receive full access to the NEET preparation platform.
+        </p>
+        <div style="display:flex; justify-content:center; gap:12px;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeApproveConfirmModal()">Cancel</button>
+          <button type="button" id="btnConfirmApproveSubmit" class="btn" style="background:#10B981; color:#fff; font-weight:700;" onclick="app.submitApproval()">
+            Confirm Approval
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Reject Request with Reason Modal -->
+    <div id="modalRejectReason" class="modal-overlay" onclick="if(event.target === this) app.closeRejectModal()">
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge badge-danger">REJECT REQUEST</span>
+            <h3 style="margin-top:2px;">Reject Student Request</h3>
+          </div>
+          <button class="modal-close" onclick="app.closeRejectModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px;">
+          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
+            Please provide the reason for rejecting this registration request. The student will be informed when they attempt to log in.
+          </p>
+          <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Reason for Rejection *</label>
+          <textarea id="rejectReasonInput" rows="3" class="auth-input" style="padding:10px; width:100%; resize:vertical;" placeholder="e.g. Invalid contact details or duplicate registration..."></textarea>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeRejectModal()">Cancel</button>
+          <button type="button" id="btnConfirmRejectSubmit" class="btn" style="background:#EF4444; color:#fff; font-weight:700;" onclick="app.submitRejection()">
+            Reject Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 4: Suspend Student Modal -->
+    <div id="modalSuspendReason" class="modal-overlay" onclick="if(event.target === this) app.closeSuspendModal()">
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="badge" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1;">SUSPEND ACCESS</span>
+            <h3 style="margin-top:2px;">Suspend Student Account</h3>
+          </div>
+          <button class="modal-close" onclick="app.closeSuspendModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px;">
+          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
+            Please specify the reason for suspending this student's access to the application.
+          </p>
+          <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Suspension Reason *</label>
+          <textarea id="suspendReasonInput" rows="3" class="auth-input" style="padding:10px; width:100%; resize:vertical;" placeholder="e.g. Policy violation or account review..."></textarea>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="app.closeSuspendModal()">Cancel</button>
+          <button type="button" id="btnConfirmSuspendSubmit" class="btn" style="background:#475569; color:#fff; font-weight:700;" onclick="app.submitSuspension()">
+            Suspend Account
+          </button>
+        </div>
+      </div>
+    </div>
 
   <!-- JavaScript Modules -->
   <script src="/static/js/api.js?v=3.7"></script>

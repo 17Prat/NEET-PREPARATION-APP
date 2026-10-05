@@ -3,61 +3,1063 @@
  * Coordinates API requests, reactive state updates, and view renders
  */
 
-const app = {
+window.app = {
+
+  // --- Current Active Admin Tab & Approval State ---
+  currentAdminTab: 'dashboard',
+  selectedStudentId: null,
+  pendingStudentsCache: [],
+  allStudentsCache: [],
 
   // --- Initialization ---
   async init() {
     console.log("Initializing Medicqube Platform...");
+
+    // Setup direct DOM click bindings for auth views
+    this.setupAuthEventListeners();
+
+    // First Screen Requirement: Check existing session
+    if (!api.token) {
+      // First screen on load MUST be LOGIN PAGE!
+      this.showLoginScreen();
+      return;
+    }
+
     try {
-      // 1. Fetch current profile
       const profile = await api.getProfile().catch(() => null);
-      if (profile) {
-        state.user.fullName = profile.full_name;
-        state.user.email = profile.email;
-        state.user.targetYear = profile.target_year;
-        state.user.studentGrade = profile.student_grade;
-        state.user.role = profile.role;
-        
+      if (!profile) {
+        api.setToken(null);
+        this.showLoginScreen();
+        return;
+      }
+
+      state.user.fullName = profile.full_name;
+      state.user.email = profile.email;
+      state.user.role = profile.role;
+      state.user.status = profile.status;
+      state.user.targetYear = profile.target_year;
+      state.user.studentGrade = profile.student_grade;
+
+      // 1. Role Check: ADMIN -> Show Admin Portal
+      if (profile.role === 'ADMIN') {
+        this.showAdminPortal();
+        return;
+      }
+
+      // 2. Role Check: STUDENT -> Enforce Approval Status Rule (REGISTERED != APPROVED)
+      const status = (profile.status || 'PENDING').toUpperCase();
+      if (status === 'PENDING') {
+        this.showPendingScreen(profile.email);
+        return;
+      } else if (status === 'REJECTED') {
+        this.showRejectedScreen(profile.rejection_reason);
+        return;
+      } else if (status === 'SUSPENDED') {
+        this.showSuspendedScreen(profile.suspension_reason);
+        return;
+      } else if (status === 'APPROVED') {
+        // Only APPROVED students enter the main website!
         const userNameEl = document.getElementById('userName');
         if (userNameEl) userNameEl.textContent = profile.full_name;
         const userAvatarEl = document.getElementById('userAvatar');
         if (userAvatarEl) userAvatarEl.textContent = profile.full_name.charAt(0);
         const userMetaEl = document.getElementById('userMeta');
-        if (userMetaEl) userMetaEl.textContent = `${profile.student_grade.replace('_', ' ')} • Target ${profile.target_year}`;
+        if (userMetaEl) userMetaEl.textContent = `${(profile.student_grade || 'Class 12').replace('_', ' ')} • Target ${profile.target_year || '2026'}`;
         const gradeBadge = document.getElementById('currentGradeBadge');
         if (gradeBadge) gradeBadge.textContent = profile.student_grade === 'CLASS_11' ? '11th Std' : '12th Std';
-      }
 
-      // 2. Load taxonomy tree
-      const taxonomy = await api.getTaxonomyTree();
-      state.taxonomy = taxonomy;
-      if (taxonomy && taxonomy.length > 0) {
-        state.selectedSubject = taxonomy[0];
-        if (taxonomy[0].chapters.length > 0) {
-          state.selectedChapter = taxonomy[0].chapters[0];
-          if (taxonomy[0].chapters[0].topics.length > 0) {
-            state.selectedTopic = taxonomy[0].chapters[0].topics[0];
+        this.showStudentPortal();
+
+        // Load syllabus taxonomy
+        const taxonomy = await api.getTaxonomyTree().catch(() => []);
+        state.taxonomy = taxonomy;
+        if (taxonomy && taxonomy.length > 0) {
+          state.selectedSubject = taxonomy[0];
+          if (taxonomy[0].chapters && taxonomy[0].chapters.length > 0) {
+            state.selectedChapter = taxonomy[0].chapters[0];
+            if (taxonomy[0].chapters[0].topics && taxonomy[0].chapters[0].topics.length > 0) {
+              state.selectedTopic = taxonomy[0].chapters[0].topics[0];
+            }
           }
         }
-      }
 
-      // 3. Render initial view
-      await this.navigate('dashboard');
+        await this.navigate('dashboard');
 
-      // 4. Check for shared question URL param or hash
-      const urlParams = new URLSearchParams(window.location.search);
-      const shareToken = urlParams.get('share_id') || urlParams.get('shared') || (window.location.hash.startsWith('#shared=') ? window.location.hash.replace('#shared=', '') : null);
-      if (shareToken) {
-        this.handleOpenSharedQuestion(shareToken);
+        // Check for shared question URL param or hash
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareToken = urlParams.get('share_id') || urlParams.get('shared') || (window.location.hash.startsWith('#shared=') ? window.location.hash.replace('#shared=', '') : null);
+        if (shareToken) {
+          this.handleOpenSharedQuestion(shareToken);
+        }
       }
     } catch (err) {
       console.error("App init error:", err);
-      showToast("Could not connect to backend server.", "error");
+      api.setToken(null);
+      this.showLoginScreen();
     }
   },
 
-  // --- Navigation Router ---
+  // Direct Event Listeners for rock-solid click interactions
+  setupAuthEventListeners() {
+    const bind = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.onclick = (e) => {
+          if (e && e.preventDefault) e.preventDefault();
+          fn();
+        };
+      }
+    };
+
+    bind('linkCreateAccount', () => this.showRegisterScreen());
+    bind('linkAdminLogin', () => this.showAdminLoginScreen());
+    bind('linkRegisterBackToLogin', () => this.showLoginScreen());
+    bind('linkAdminBackToLogin', () => this.showLoginScreen());
+    bind('btnQuickFillStudent', () => this.quickFillStudent());
+    bind('btnQuickFillAdmin', () => this.quickFillAdmin());
+    bind('btnQuickFillPending', () => this.quickFillPending());
+  },
+
+  // Quick Demo Auto-Fill Helpers for Testing
+  quickFillStudent() {
+    this.showLoginScreen();
+    const emailInput = document.getElementById('loginEmailMobile');
+    const pwInput = document.getElementById('loginPassword');
+    if (emailInput) emailInput.value = 'student@medicqube.com';
+    if (pwInput) pwInput.value = 'student123';
+    showToast("Filled demo approved student: student@medicqube.com / student123", "success");
+  },
+
+  quickFillAdmin() {
+    this.showAdminLoginScreen();
+    const emailInput = document.getElementById('adminEmail');
+    const pwInput = document.getElementById('adminPassword');
+    if (emailInput) emailInput.value = 'admin@medicqube.com';
+    if (pwInput) pwInput.value = 'admin123';
+    showToast("Filled demo admin: admin@medicqube.com / admin123", "success");
+  },
+
+  quickFillPending() {
+    this.showLoginScreen();
+    const emailInput = document.getElementById('loginEmailMobile');
+    const pwInput = document.getElementById('loginPassword');
+    if (emailInput) emailInput.value = 'pending@medicqube.com';
+    if (pwInput) pwInput.value = 'student123';
+    showToast("Filled pending approval demo: pending@medicqube.com / student123", "info");
+  },
+
+  // ==========================================
+  // Auth Screen Visibility Switchers
+  // ==========================================
+
+  hideAllAuthViews() {
+    ['authViewLogin', 'authViewRegister', 'authViewPending', 'authViewRejected', 'authViewSuspended', 'authViewAdminLogin'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  },
+
+  showLoginScreen() {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const loginView = document.getElementById('authViewLogin');
+    if (loginView) loginView.style.display = 'block';
+
+    const errAlert = document.getElementById('loginErrorAlert');
+    if (errAlert) errAlert.style.display = 'none';
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showRegisterScreen() {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const regView = document.getElementById('authViewRegister');
+    if (regView) regView.style.display = 'block';
+
+    const errAlert = document.getElementById('registerErrorAlert');
+    if (errAlert) errAlert.style.display = 'none';
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showPendingScreen(email = '') {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const pendingView = document.getElementById('authViewPending');
+    if (pendingView) pendingView.style.display = 'block';
+
+    const emailDisplay = document.getElementById('pendingEmailDisplay');
+    if (emailDisplay && email) emailDisplay.textContent = email;
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showRejectedScreen(reason = '') {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const rejectedView = document.getElementById('authViewRejected');
+    if (rejectedView) rejectedView.style.display = 'block';
+
+    const reasonEl = document.getElementById('rejectedReasonDisplay');
+    if (reasonEl) reasonEl.textContent = reason || "Application did not meet verification criteria.";
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showSuspendedScreen(reason = '') {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const suspendedView = document.getElementById('authViewSuspended');
+    if (suspendedView) suspendedView.style.display = 'block';
+
+    const reasonEl = document.getElementById('suspendedReasonDisplay');
+    if (reasonEl) reasonEl.textContent = reason || "Account access is suspended by administration.";
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showAdminLoginScreen() {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'flex';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+
+    this.hideAllAuthViews();
+    const adminLoginView = document.getElementById('authViewAdminLogin');
+    if (adminLoginView) adminLoginView.style.display = 'block';
+
+    const errAlert = document.getElementById('adminLoginErrorAlert');
+    if (errAlert) errAlert.style.display = 'none';
+
+    this.setupAuthEventListeners();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  showStudentPortal() {
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'none';
+    if (adminPortal) adminPortal.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'flex';
+
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  async showAdminPortal() {
+    if (!api.token || state.user.role !== 'ADMIN') {
+      this.showAdminLoginScreen();
+      return;
+    }
+
+    const authContainer = document.getElementById('authContainer');
+    const adminPortal = document.getElementById('adminPortalContainer');
+    const studentApp = document.getElementById('app');
+
+    if (authContainer) authContainer.style.display = 'none';
+    if (studentApp) studentApp.style.display = 'none';
+    if (adminPortal) adminPortal.style.display = 'block';
+
+    const nameEl = document.getElementById('adminProfileName');
+    if (nameEl) nameEl.textContent = state.user.fullName || "Administrator";
+
+    await this.navigateAdmin('dashboard');
+    try { lucide.createIcons(); } catch (e) {}
+  },
+
+  togglePasswordVisibility(inputId, btnEl) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btnEl.innerHTML = `<i data-lucide="eye-off" style="width:16px; height:16px;"></i>`;
+    } else {
+      input.type = 'password';
+      btnEl.innerHTML = `<i data-lucide="eye" style="width:16px; height:16px;"></i>`;
+    }
+    lucide.createIcons();
+  },
+
+  showForgotPasswordPrompt() {
+    const email = prompt("Enter your registered email address for password reset instructions:");
+    if (email && email.trim()) {
+      showToast("Password reset link has been dispatched to your email.", "info");
+    }
+  },
+
+  // ==========================================
+  // Auth Form Handlers
+  // ==========================================
+
+  async handleLoginSubmit(event) {
+    event.preventDefault();
+    const emailMobileInput = document.getElementById('loginEmailMobile');
+    const passwordInput = document.getElementById('loginPassword');
+    const errAlert = document.getElementById('loginErrorAlert');
+    const submitBtn = document.getElementById('btnLoginSubmit');
+
+    const emailOrMobile = emailMobileInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!emailOrMobile || !password) {
+      if (errAlert) {
+        errAlert.textContent = "Please provide your email/mobile and password.";
+        errAlert.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (errAlert) errAlert.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader" class="spin" style="width:16px; height:16px;"></i> Logging in...`;
+    lucide.createIcons();
+
+    try {
+      const res = await api.login(emailOrMobile, password);
+      api.setToken(res.access_token);
+
+      state.user.fullName = res.user.full_name;
+      state.user.email = res.user.email;
+      const userRole = res.role || (res.user && res.user.role) || 'STUDENT';
+      state.user.role = userRole;
+      state.user.status = res.status;
+      state.user.targetYear = res.user.target_year;
+      state.user.studentGrade = res.user.student_grade;
+
+      // Handle Admin login via main login form: open the website and enable Admin Panel button
+      if (userRole === 'ADMIN') {
+        showToast("Welcome back, Administrator!", "success");
+        this.showStudentPortal();
+        
+        // Refresh taxonomy and go to dashboard
+        const taxonomy = await api.getTaxonomyTree().catch(() => []);
+        state.taxonomy = taxonomy;
+        await this.navigate('dashboard');
+        return;
+      }
+
+      // Handle Student login by status
+      const status = (res.status || 'PENDING').toUpperCase();
+      if (status === 'APPROVED') {
+        showToast(`Welcome back, ${res.user.full_name}!`, "success");
+        this.showStudentPortal();
+        
+        // Refresh taxonomy and go to dashboard
+        const taxonomy = await api.getTaxonomyTree().catch(() => []);
+        state.taxonomy = taxonomy;
+        await this.navigate('dashboard');
+      } else if (status === 'PENDING') {
+        this.showPendingScreen(res.user.email);
+      } else if (status === 'REJECTED') {
+        this.showRejectedScreen(res.rejection_reason || res.user.rejection_reason);
+      } else if (status === 'SUSPENDED') {
+        this.showSuspendedScreen(res.suspension_reason || res.user.suspension_reason);
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
+      if (errAlert) {
+        errAlert.textContent = err.message || "Invalid email/mobile or password.";
+        errAlert.style.display = 'flex';
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>LOGIN</span>`;
+      lucide.createIcons();
+    }
+  },
+
+  async handleRegisterSubmit(event) {
+    event.preventDefault();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const mobile = document.getElementById('regMobile').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+    let studentGrade = document.getElementById('regClass')?.value || 'CLASS_12';
+    if (studentGrade === '11') studentGrade = 'CLASS_11';
+    else if (studentGrade === '12') studentGrade = 'CLASS_12';
+    else if (studentGrade === 'Repeater') studentGrade = 'REPEATER';
+    const targetYear = parseInt(document.getElementById('regTargetYear')?.value || '2026', 10) || 2026;
+    const preferredLanguage = document.getElementById('regLanguage')?.value || 'English';
+    const errAlert = document.getElementById('registerErrorAlert');
+    const submitBtn = document.getElementById('btnRegisterSubmit');
+
+    if (password !== confirmPassword) {
+      if (errAlert) {
+        errAlert.textContent = "Passwords do not match. Please verify.";
+        errAlert.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (password.length < 6) {
+      if (errAlert) {
+        errAlert.textContent = "Password must be at least 6 characters long.";
+        errAlert.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (errAlert) errAlert.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader" class="spin" style="width:16px; height:16px;"></i> Submitting registration...`;
+    lucide.createIcons();
+
+    try {
+      const payload = {
+        full_name: fullName,
+        email: email,
+        mobile: mobile,
+        password: password,
+        confirm_password: confirmPassword,
+        student_grade: studentGrade,
+        target_year: targetYear,
+        preferred_language: preferredLanguage,
+      };
+
+      const res = await api.register(payload);
+      
+      // Store token (status is PENDING)
+      if (res.access_token) {
+        api.setToken(res.access_token);
+      }
+      const registeredEmail = (res && res.user && res.user.email) || res.email || email;
+      state.user.email = registeredEmail;
+      state.user.status = "PENDING";
+
+      showToast("Registration submitted for admin approval!", "success");
+      // MUST show Approval Pending screen, DO NOT open the main website!
+      this.showPendingScreen(registeredEmail);
+    } catch (err) {
+      console.error("Registration failed:", err);
+      if (errAlert) {
+        errAlert.textContent = err.message || "Registration failed. Please check your details.";
+        errAlert.style.display = 'flex';
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>CREATE ACCOUNT</span>`;
+      lucide.createIcons();
+    }
+  },
+
+  async handleCheckApprovalStatus() {
+    const btn = document.getElementById('btnCheckApprovalStatus');
+    const email = state.user.email || document.getElementById('pendingEmailDisplay')?.textContent?.trim();
+
+    if (!email) {
+      this.showLoginScreen();
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="refresh-cw" class="spin" style="width:16px; height:16px;"></i> Checking Status...`;
+      lucide.createIcons();
+    }
+
+    try {
+      const res = await api.checkStatus(email);
+      const status = (res.status || 'PENDING').toUpperCase();
+
+      if (status === 'APPROVED') {
+        showToast("Congratulations! Your account has been approved.", "success");
+        // Re-authenticate / fetch profile
+        const profile = await api.getProfile().catch(() => null);
+        if (profile && profile.status === 'APPROVED') {
+          state.user.status = 'APPROVED';
+          this.showStudentPortal();
+          await this.navigate('dashboard');
+        } else {
+          // Direct student to login
+          this.showLoginScreen();
+          showToast("Account approved! Please log in to enter your dashboard.", "success");
+        }
+      } else if (status === 'PENDING') {
+        showToast("Your account is still pending admin review. Please wait.", "info");
+      } else if (status === 'REJECTED') {
+        showToast("Your registration request was not approved.", "error");
+        this.showRejectedScreen(res.rejection_reason);
+      } else if (status === 'SUSPENDED') {
+        showToast("Your account has been suspended.", "error");
+        this.showSuspendedScreen(res.suspension_reason);
+      }
+    } catch (err) {
+      showToast("Could not retrieve status. Please try again.", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> <span>Check Approval Status</span>`;
+        lucide.createIcons();
+      }
+    }
+  },
+
+  async handleAdminLoginSubmit(event) {
+    event.preventDefault();
+    const email = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const errAlert = document.getElementById('adminLoginErrorAlert');
+    const submitBtn = document.getElementById('btnAdminLoginSubmit');
+
+    if (!email || !password) {
+      if (errAlert) {
+        errAlert.textContent = "Please enter admin email and password.";
+        errAlert.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (errAlert) errAlert.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader" class="spin" style="width:16px; height:16px;"></i> Authenticating admin...`;
+    lucide.createIcons();
+
+    try {
+      const res = await api.adminLogin(email, password);
+      api.setToken(res.access_token);
+      state.user.fullName = res.user.full_name;
+      state.user.email = res.user.email;
+      state.user.role = res.role;
+      state.user.status = res.status;
+
+      showToast("Admin authenticated successfully!", "success");
+      await this.showAdminPortal();
+    } catch (err) {
+      console.error("Admin login error:", err);
+      if (errAlert) {
+        errAlert.textContent = err.message || "Invalid administrator credentials.";
+        errAlert.style.display = 'flex';
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>LOGIN</span>`;
+      lucide.createIcons();
+    }
+  },
+
+  handleLogout() {
+    api.setToken(null);
+    state.user = { fullName: '', email: '', targetYear: 2026, studentGrade: 'CLASS_12', role: 'STUDENT', status: null };
+    showToast("Logged out successfully.", "info");
+    this.showLoginScreen();
+  },
+
+  // ==========================================
+  // Admin Approval Navigation & Workflows
+  // ==========================================
+
+  async navigateAdmin(tabName) {
+    this.currentAdminTab = tabName;
+
+    document.querySelectorAll('.admin-nav-tab').forEach(tab => {
+      if (tab.getAttribute('data-admin-tab') === tabName) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    const content = document.getElementById('adminMainContent');
+    if (!content) return;
+    content.innerHTML = `<div style="padding:48px; text-align:center; color:#64748B;"><i data-lucide="loader" class="spin" style="width:32px; height:32px; margin:0 auto 12px auto; display:block;"></i> Loading data...</div>`;
+    lucide.createIcons();
+
+    try {
+      if (tabName === 'dashboard') {
+        await this.loadAdminApprovalDashboard();
+      } else if (tabName === 'requests') {
+        await this.loadAdminApprovalRequests();
+      } else if (tabName === 'students' || tabName === 'approved' || tabName === 'rejected' || tabName === 'suspended') {
+        await this.loadAdminApprovalStudents(tabName === 'students' ? 'all' : tabName);
+      } else if (tabName === 'questions') {
+        await this.loadAdminManageQuestions();
+      } else if (tabName === 'addQuestion') {
+        this.loadAdminAddQuestion();
+      }
+    } catch (err) {
+      content.innerHTML = `<div class="card p-6 text-danger">Error: ${err.message}</div>`;
+    }
+  },
+
+  async loadAdminApprovalDashboard() {
+    const content = document.getElementById('adminMainContent');
+    const [stats, pendingStudents] = await Promise.all([
+      api.getAdminApprovalStats().catch(() => ({ total_students: 0, pending_students: 0, approved_students: 0, rejected_students: 0, suspended_students: 0 })),
+      api.getAdminApprovalStudents('PENDING').catch(() => [])
+    ]);
+
+    this.pendingStudentsCache = pendingStudents;
+
+    // Update pending badge in admin navbar
+    const badge = document.getElementById('adminPendingCountBadge');
+    if (badge) {
+      if (stats.pending_students > 0) {
+        badge.textContent = stats.pending_students;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    content.innerHTML = components.renderApprovalAdminDashboard(stats, pendingStudents);
+    lucide.createIcons();
+  },
+
+  async loadAdminApprovalRequests(searchQuery = '') {
+    const content = document.getElementById('adminMainContent');
+    const requests = await api.getAdminApprovalStudents('PENDING').catch(() => []);
+    this.pendingStudentsCache = requests;
+
+    // Update badge
+    const badge = document.getElementById('adminPendingCountBadge');
+    if (badge) {
+      if (requests.length > 0) {
+        badge.textContent = requests.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    content.innerHTML = components.renderApprovalRequestsTable(requests, searchQuery);
+    lucide.createIcons();
+  },
+
+  async loadAdminApprovalStudents(filter = 'all', searchQuery = '') {
+    const content = document.getElementById('adminMainContent');
+    const students = await api.getAdminApprovalStudents(filter === 'all' ? null : filter, searchQuery).catch(() => []);
+    this.allStudentsCache = students;
+
+    content.innerHTML = components.renderApprovalStudentsDirectory(students, filter, searchQuery);
+    lucide.createIcons();
+  },
+
+  loadAdminAddQuestion() {
+    const content = document.getElementById('adminMainContent');
+    content.innerHTML = components.renderAdminAddQuestionForm(state.taxonomy);
+    lucide.createIcons();
+  },
+
+  async loadAdminManageQuestions(activeSubject = 'all', searchQuery = '') {
+    this.adminQuestionActiveSubject = activeSubject;
+    this.adminQuestionSearchQuery = searchQuery;
+    const content = document.getElementById('adminMainContent');
+    if (!content) return;
+    content.innerHTML = `<div style="padding:48px; text-align:center; color:#64748B;"><i data-lucide="loader" class="spin" style="width:32px; height:32px; margin:0 auto 12px auto; display:block;"></i> Loading Question Repository...</div>`;
+    lucide.createIcons();
+
+    try {
+      const questions = await api.getAdminQuestionsList(activeSubject === 'all' ? null : activeSubject, searchQuery).catch(() => []);
+      this.adminQuestionsCache = questions;
+      content.innerHTML = components.renderAdminQuestionsRepository(questions, activeSubject, searchQuery);
+      lucide.createIcons();
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(content);
+      }
+    } catch (err) {
+      content.innerHTML = `<div class="card p-6 text-danger">Error loading questions: ${err.message}</div>`;
+    }
+  },
+
+  setAdminQuestionSubjectFilter(subject) {
+    this.loadAdminManageQuestions(subject, this.adminQuestionSearchQuery || '');
+  },
+
+  onAdminQuestionSearch(event) {
+    const query = event.target.value;
+    this.adminQuestionSearchQuery = query;
+    this.loadAdminManageQuestions(this.adminQuestionActiveSubject || 'all', query);
+  },
+
+  async handleAdminShareQuestion(questionId, existingShareToken) {
+    try {
+      let q = (this.adminQuestionsCache || []).find(item => item.id === questionId);
+      if (!existingShareToken && (!q || !q.share_token)) {
+        const shareData = await api.shareAdminQuestion(questionId);
+        if (q) {
+          q.is_shared = true;
+          q.share_token = shareData.share_token;
+          q.share_url = shareData.share_url;
+        }
+      }
+      this.openShareModal(q || questionId);
+    } catch (err) {
+      showToast("Could not share question: " + err.message, "error");
+    }
+  },
+
+  // Search input listeners for Admin tables
+  onApprovalRequestsSearch(event) {
+    const query = event.target.value;
+    const content = document.getElementById('adminMainContent');
+    if (content) {
+      content.innerHTML = components.renderApprovalRequestsTable(this.pendingStudentsCache, query);
+      lucide.createIcons();
+    }
+  },
+
+  onApprovalDirectorySearch(event) {
+    const query = event.target.value;
+    const currentFilter = this.currentAdminTab === 'students' ? 'all' : this.currentAdminTab;
+    const content = document.getElementById('adminMainContent');
+    if (content) {
+      content.innerHTML = components.renderApprovalStudentsDirectory(this.allStudentsCache, currentFilter, query);
+      lucide.createIcons();
+    }
+  },
+
+  setApprovalDirectoryFilter(filter) {
+    this.loadAdminApprovalStudents(filter);
+  },
+
+  // ==========================================
+  // Admin Action Modals & Operations
+  // ==========================================
+
+  openStudentDetailModal: async function(studentId) {
+    const modal = document.getElementById('modalStudentDetail');
+    const body = document.getElementById('studentDetailModalBody');
+    const footer = document.getElementById('studentDetailModalFooter');
+    if (!modal || !body) return;
+
+    modal.style.display = '';
+    body.innerHTML = `<div style="padding:24px; text-align:center; color:#64748B;"><i data-lucide="loader" class="spin" style="width:24px; height:24px; margin:0 auto 8px auto; display:block;"></i> Fetching student request...</div>`;
+    modal.classList.add('active');
+    lucide.createIcons();
+
+    try {
+      const student = await api.getAdminStudentDetails(studentId);
+      this.selectedStudentId = student.id;
+      body.innerHTML = components.renderApprovalStudentDetail(student);
+
+      const st = (student.status || 'PENDING').toUpperCase();
+      if (st === 'PENDING') {
+        footer.innerHTML = `
+          <button type="button" class="btn btn-secondary" onclick="app.closeStudentDetailModal()">Close</button>
+          <button type="button" class="btn-action-sm btn-reject" style="padding:8px 16px; font-size:0.88rem;" onclick="app.closeStudentDetailModal(); app.openRejectModal('${student.id}')">
+            <i data-lucide="x" style="width:14px; height:14px;"></i> Reject
+          </button>
+          <button type="button" class="btn-action-sm btn-approve" style="padding:8px 16px; font-size:0.88rem;" onclick="app.closeStudentDetailModal(); app.openApproveConfirmModal('${student.id}')">
+            <i data-lucide="check" style="width:14px; height:14px;"></i> Approve Student
+          </button>
+        `;
+      } else {
+        footer.innerHTML = `
+          <button type="button" class="btn btn-secondary" onclick="app.closeStudentDetailModal()">Close</button>
+        `;
+      }
+      lucide.createIcons();
+    } catch (err) {
+      body.innerHTML = `<div class="text-danger p-4">Error loading student details: ${err.message}</div>`;
+    }
+  },
+
+  closeStudentDetailModal() {
+    const modal = document.getElementById('modalStudentDetail');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  },
+
+  openApproveConfirmModal(studentId, studentName) {
+    this.selectedStudentId = studentId;
+    if (!studentName) {
+      const student = (this.pendingStudentsCache || []).find(s => s.id === studentId) || (this.allStudentsCache || []).find(s => s.id === studentId);
+      studentName = student ? student.full_name : 'this student';
+    }
+    const nameEl = document.getElementById('approveConfirmStudentName');
+    if (nameEl) {
+      nameEl.textContent = `Are you sure you want to approve "${studentName}"? Once approved, they will receive full access to all NEET practice modules and mock test series.`;
+    }
+    const modal = document.getElementById('modalApproveConfirm');
+    if (modal) {
+      modal.style.display = '';
+      modal.classList.add('active');
+    }
+    lucide.createIcons();
+  },
+
+  closeApproveConfirmModal() {
+    const modal = document.getElementById('modalApproveConfirm');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  },
+
+  async submitApproval() {
+    if (!this.selectedStudentId) return;
+    const btn = document.getElementById('btnConfirmApproveSubmit');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Approving...";
+    }
+
+    try {
+      await api.approveStudent(this.selectedStudentId);
+      showToast("Student account approved successfully!", "success");
+      this.closeApproveConfirmModal();
+      this.closeStudentDetailModal();
+      await this.navigateAdmin(this.currentAdminTab);
+    } catch (err) {
+      showToast("Approval failed: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Confirm Approval";
+      }
+    }
+  },
+
+  openRejectModal(studentId) {
+    this.selectedStudentId = studentId;
+    const input = document.getElementById('rejectReasonInput');
+    if (input) input.value = '';
+    const modal = document.getElementById('modalRejectReason');
+    if (modal) {
+      modal.style.display = '';
+      modal.classList.add('active');
+    }
+    lucide.createIcons();
+  },
+
+  closeRejectModal() {
+    const modal = document.getElementById('modalRejectReason');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  },
+
+  async submitRejection() {
+    if (!this.selectedStudentId) return;
+    const reasonInput = document.getElementById('rejectReasonInput');
+    const reason = reasonInput ? reasonInput.value.trim() : '';
+
+    if (!reason) {
+      showToast("Please provide a reason for rejection.", "error");
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmRejectSubmit');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Rejecting...";
+    }
+
+    try {
+      await api.rejectStudent(this.selectedStudentId, reason);
+      showToast("Registration request rejected.", "info");
+      this.closeRejectModal();
+      this.closeStudentDetailModal();
+      await this.navigateAdmin(this.currentAdminTab);
+    } catch (err) {
+      showToast("Rejection failed: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Reject Request";
+      }
+    }
+  },
+
+  openSuspendModal(studentId) {
+    this.selectedStudentId = studentId;
+    const input = document.getElementById('suspendReasonInput');
+    if (input) input.value = '';
+    const modal = document.getElementById('modalSuspendReason');
+    if (modal) {
+      modal.style.display = '';
+      modal.classList.add('active');
+    }
+    lucide.createIcons();
+  },
+
+  closeSuspendModal() {
+    const modal = document.getElementById('modalSuspendReason');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  },
+
+  async submitSuspension() {
+    if (!this.selectedStudentId) return;
+    const reasonInput = document.getElementById('suspendReasonInput');
+    const reason = reasonInput ? reasonInput.value.trim() : '';
+
+    if (!reason) {
+      showToast("Please provide a reason for suspension.", "error");
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmSuspendSubmit');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Suspending...";
+    }
+
+    try {
+      await api.suspendStudent(this.selectedStudentId, reason);
+      showToast("Student account suspended.", "info");
+      this.closeSuspendModal();
+      this.closeStudentDetailModal();
+      await this.navigateAdmin(this.currentAdminTab);
+    } catch (err) {
+      showToast("Suspension failed: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Suspend Account";
+      }
+    }
+  },
+
+  async handleReactivateStudent(studentId) {
+    if (!confirm("Reactivate this student account and restore their platform access?")) return;
+    try {
+      await api.reactivateStudent(studentId);
+      showToast("Student account reactivated successfully!", "success");
+      await this.navigateAdmin(this.currentAdminTab);
+    } catch (err) {
+      showToast("Reactivation failed: " + err.message, "error");
+    }
+  },
+
+  async handleAdminAddQuestionSubmit(event) {
+    event.preventDefault();
+    const examLevel = document.getElementById('adminQExamLevel').value;
+    const subject = document.getElementById('adminQSubject').value;
+    const chapter = document.getElementById('adminQChapter').value.trim();
+    const difficulty = document.getElementById('adminQDifficulty').value;
+    const questionText = document.getElementById('adminQText').value.trim();
+    const correctOptKey = document.querySelector('input[name="adminCorrectOption"]:checked')?.value || 'A';
+    const explanation = document.getElementById('adminQExplanation').value.trim();
+    const submitBtn = document.getElementById('btnAdminAddQuestionSubmit');
+
+    const optA = document.getElementById('adminOptA').value.trim();
+    const optB = document.getElementById('adminOptB').value.trim();
+    const optC = document.getElementById('adminOptC').value.trim();
+    const optD = document.getElementById('adminOptD').value.trim();
+
+    if (!questionText || !optA || !optB || !optC || !optD) {
+      showToast("Please complete the question statement and all 4 options.", "error");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader" class="spin" style="width:16px; height:16px;"></i> Publishing Question...`;
+    lucide.createIcons();
+
+    try {
+      const payload = {
+        exam_level: examLevel,
+        subject_name: subject,
+        chapter_name: chapter,
+        topic_name: chapter,
+        question_text: questionText,
+        difficulty: difficulty,
+        explanation: explanation,
+        option_a: optA,
+        option_b: optB,
+        option_c: optC,
+        option_d: optD,
+        correct_option: correctOptKey,
+        add_to_practice: true,
+        add_to_test: true,
+        test_title: `NEET Official Mock: ${chapter}`
+      };
+
+      const res = await api.unifiedAddQuestion(payload);
+      showToast("Question successfully published to Practice & Test Series!", "success");
+      
+      // Reset form
+      document.getElementById('formAdminAddQuestion').reset();
+      
+      // Refresh taxonomy
+      const taxonomy = await api.getTaxonomyTree().catch(() => []);
+      state.taxonomy = taxonomy;
+
+      // Navigate to Question Repository tab so Admin can immediately view & Share Question
+      await this.navigateAdmin('questions');
+    } catch (err) {
+      showToast("Failed to publish question: " + err.message, "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i data-lucide="plus-circle"></i> Publish Question to Portal`;
+      lucide.createIcons();
+    }
+  },
+
+  // --- Protected Student Navigation Router ---
   async navigate(tabName) {
+    // Client-side route guard: if not authenticated or not APPROVED student, block!
+    if (!api.token) {
+      this.showLoginScreen();
+      return;
+    }
+
+    if (state.user.role === 'STUDENT' && state.user.status !== 'APPROVED') {
+      if (state.user.status === 'PENDING') this.showPendingScreen(state.user.email);
+      else if (state.user.status === 'REJECTED') this.showRejectedScreen();
+      else if (state.user.status === 'SUSPENDED') this.showSuspendedScreen();
+      else this.showLoginScreen();
+      return;
+    }
+
     state.currentTab = tabName;
 
     // Update nav links active state
@@ -1188,9 +2190,17 @@ const app = {
   // Share Question Handlers
   // ==========================================
 
-  openShareModal(questionId) {
-    const list = (state.savedQuestionsData && state.savedQuestionsData.questions) ? state.savedQuestionsData.questions : [];
-    const q = list.find(item => item.id === questionId);
+  openShareModal(questionIdOrObj) {
+    let q = null;
+    if (typeof questionIdOrObj === 'object' && questionIdOrObj !== null) {
+      q = questionIdOrObj;
+    } else {
+      const list = (state.savedQuestionsData && state.savedQuestionsData.questions) ? state.savedQuestionsData.questions : [];
+      q = list.find(item => item.id === questionIdOrObj);
+      if (!q && this.adminQuestionsCache) {
+        q = this.adminQuestionsCache.find(item => item.id === questionIdOrObj);
+      }
+    }
     if (!q) {
       showToast("Question not found", "error");
       return;
@@ -1224,7 +2234,7 @@ const app = {
     const linkInput = document.getElementById('shareLinkInput');
     const helpText = document.getElementById('shareHelpText');
 
-    if (catEl) catEl.textContent = `${q.exam_level} • ${q.subject} • ${q.chapter}`;
+    if (catEl) catEl.textContent = `${q.exam_level || 'NEET UG'} • ${q.subject || 'All Subjects'} • ${q.chapter || 'All Chapters'}`;
     if (snippetEl) snippetEl.textContent = q.question_text;
 
     const fullShareUrl = `${window.location.origin}/#shared=${q.share_token}`;
@@ -1327,6 +2337,24 @@ const app = {
     }).catch(() => {
       showToast("Copied to clipboard", "success");
     });
+  },
+
+  shareToWhatsApp() {
+    const q = state.currentShareQuestion;
+    if (!q) return;
+    const shareUrl = `${window.location.origin}/#shared=${q.share_token}`;
+    const text = `*NEET Question [${q.subject || 'NEET'} • ${q.chapter || ''}]*\n\n${q.question_text}\n\n👉 Solve & view step-by-step solution here:\n${shareUrl}`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  },
+
+  shareToTelegram() {
+    const q = state.currentShareQuestion;
+    if (!q) return;
+    const shareUrl = `${window.location.origin}/#shared=${q.share_token}`;
+    const text = `NEET Question [${q.subject || 'NEET'} • ${q.chapter || ''}]:\n${q.question_text}\n\n👉 Solve here: ${shareUrl}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   },
 
   previewCurrentSharedQuestion() {

@@ -7,13 +7,13 @@ from backend.app.models.mistake import UserMistake
 from backend.app.models.question import Question, QuestionOption
 from backend.app.models.user import User
 from backend.app.schemas.analytics import MistakeOut, ResolveMistakeIn, ResolveMistakeOut
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_approved_student
 
 router = APIRouter(prefix="/mistakes", tags=["My Mistakes Remediation"])
 
 @router.get("", response_model=List[MistakeOut])
 def list_my_mistakes(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     mistakes = db.query(UserMistake).filter(
@@ -58,7 +58,7 @@ def list_my_mistakes(
 def retry_and_resolve_mistake(
     question_id: str,
     data: ResolveMistakeIn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     mistake = db.query(UserMistake).filter(

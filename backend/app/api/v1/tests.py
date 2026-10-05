@@ -8,7 +8,7 @@ from backend.app.models.test import Test, TestQuestion
 from backend.app.models.attempt import TestAttempt
 from backend.app.models.user import User
 from backend.app.schemas.test import TestOut, StartAttemptOut
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_current_user, get_approved_student
 
 router = APIRouter(prefix="/tests", tags=["Test Engine"])
 
@@ -59,7 +59,7 @@ def get_test(test_id: str, db: Session = Depends(get_db)):
 @router.post("/{test_id}/attempts", response_model=StartAttemptOut)
 def start_test_attempt(
     test_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     test = db.query(Test).filter(Test.id == test_id, Test.is_published == True).first()

@@ -8,13 +8,13 @@ from backend.app.models.bookmark import Bookmark
 from backend.app.models.question import Question
 from backend.app.models.user import User
 from backend.app.schemas.analytics import BookmarkOut
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_approved_student
 
 router = APIRouter(prefix="/bookmarks", tags=["Bookmarks"])
 
 @router.get("", response_model=List[BookmarkOut])
 def list_bookmarks(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     bookmarks = db.query(Bookmark).filter(Bookmark.user_id == current_user.id).order_by(Bookmark.created_at.desc()).all()
@@ -53,7 +53,7 @@ def list_bookmarks(
 @router.post("/{question_id}")
 def toggle_bookmark(
     question_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     question = db.query(Question).filter(Question.id == question_id).first()

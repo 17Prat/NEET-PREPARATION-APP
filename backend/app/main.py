@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 
 from backend.app.core.config import settings
 from backend.app.core.database import Base, engine, SessionLocal
-from backend.app.services.seed_data import seed_database_if_empty
+from backend.app.services.seed_data import seed_database_if_empty, ensure_demo_accounts
 
 # Routers
 from backend.app.api.v1.auth import router as auth_router
@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
+        ensure_demo_accounts(db)
         seed_database_if_empty(db)
     finally:
         db.close()

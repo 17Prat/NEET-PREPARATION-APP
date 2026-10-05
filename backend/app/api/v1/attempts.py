@@ -13,7 +13,7 @@ from backend.app.schemas.test import (
     OptionWithCorrectOut
 )
 from backend.app.services.scoring_engine import evaluate_test_attempt
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_approved_student
 
 router = APIRouter(prefix="/attempts", tags=["Attempts & Results"])
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/attempts", tags=["Attempts & Results"])
 def sync_answers(
     attempt_id: str,
     data: SyncAnswerIn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == current_user.id).first()
@@ -54,7 +54,7 @@ def sync_answers(
 def submit_attempt(
     attempt_id: str,
     data: SubmitAttemptIn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == current_user.id).first()
@@ -88,7 +88,7 @@ def submit_attempt(
 @router.get("/{attempt_id}/result", response_model=ResultSummaryOut)
 def get_attempt_result(
     attempt_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == current_user.id).first()
@@ -116,7 +116,7 @@ def get_attempt_result(
 @router.get("/{attempt_id}/review", response_model=List[QuestionReviewOut])
 def get_attempt_review(
     attempt_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_student),
     db: Session = Depends(get_db)
 ):
     attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == current_user.id).first()
