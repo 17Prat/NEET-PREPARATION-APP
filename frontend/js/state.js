@@ -23,6 +23,7 @@ const state = {
   practiceSelectedOpt: null,
   practiceRevealed: false,
   practiceCurrentResult: null,
+  practiceHistory: {},
 
   // Active Test Engine Session State
   activeAttempt: null, // { attempt_id, test_id, title, duration_minutes, total_questions, questions: [] }

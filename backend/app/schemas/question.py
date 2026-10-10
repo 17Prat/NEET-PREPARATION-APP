@@ -32,7 +32,9 @@ class QuestionOut(BaseModel):
     year: Optional[int] = None
     subject: Optional[str] = None
     chapter: Optional[str] = None
-    options: List[OptionOut]
+    correct_option_id: Optional[str] = None
+    correct_option_key: Optional[str] = None
+    options: List[OptionWithCorrectOut]
     is_bookmarked: Optional[bool] = False
 
     class Config:

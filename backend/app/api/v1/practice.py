@@ -71,6 +71,7 @@ def get_practice_questions(
     for q in questions:
         chap_name = q.topic.chapter.name if (q.topic and q.topic.chapter) else None
         sub_name = q.topic.chapter.subject.name if (q.topic and q.topic.chapter and q.topic.chapter.subject) else None
+        correct_opt = next((opt for opt in q.options if opt.is_correct), None)
         q_dict = {
             "id": q.id,
             "topic_id": q.topic_id,
@@ -84,11 +85,14 @@ def get_practice_questions(
             "subject": sub_name,
             "chapter": chap_name,
             "is_bookmarked": q.id in bookmarked_qids,
+            "correct_option_id": correct_opt.id if correct_opt else None,
+            "correct_option_key": correct_opt.option_key if correct_opt else None,
             "options": [
                 {
                     "id": opt.id,
                     "option_key": opt.option_key,
                     "option_text": opt.option_text,
+                    "is_correct": opt.is_correct,
                     "image_url": opt.image_url
                 } for opt in q.options
             ]

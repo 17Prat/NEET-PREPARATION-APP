@@ -1151,9 +1151,20 @@ window.app = {
   },
 
   async fetchPracticeQuestions(showSkeleton = false) {
+    if (!state.taxonomy || state.taxonomy.length === 0) {
+      try {
+        state.taxonomy = await api.getTaxonomyTree();
+      } catch (e) {
+        console.warn("Could not load taxonomy tree:", e);
+      }
+    }
+
     if (!state.selectedSubject && state.taxonomy && state.taxonomy.length > 0) {
       state.selectedSubject = state.taxonomy[0];
-      state.selectedChapter = state.selectedSubject.chapters[0] || null;
+      state.selectedChapter = (state.selectedSubject.chapters && state.selectedSubject.chapters[0]) || null;
+      state.selectedTopic = 'ALL';
+    } else if (state.selectedSubject && !state.selectedChapter && state.selectedSubject.chapters && state.selectedSubject.chapters.length > 0) {
+      state.selectedChapter = state.selectedSubject.chapters[0];
       state.selectedTopic = 'ALL';
     }
 
@@ -1178,6 +1189,7 @@ window.app = {
       state.practiceSelectedOpt = null;
       state.practiceRevealed = false;
       state.practiceCurrentResult = null;
+      state.practiceHistory = {};
       this.renderPracticeContent();
     } catch (err) {
       console.error("Error loading practice questions:", err);
@@ -1386,35 +1398,55 @@ window.app = {
   },
 
   async choosePracticeOption(optId) {
-    if (state.practiceRevealed) return;
-    state.practiceSelectedOpt = optId;
     const q = state.practiceQuestions[state.practiceIndex];
     if (!q) return;
 
-    try {
-      const result = await api.submitPracticeAnswer(q.id, optId);
-      state.practiceRevealed = true;
-      state.practiceCurrentResult = result;
-      this.renderPracticeContent();
+    // If already revealed or already answered for this question, prevent double click
+    if (state.practiceRevealed || (state.practiceHistory && state.practiceHistory[q.id])) return;
 
-      if (result.is_correct) {
-        showToast("Correct! +4 Marks", "success");
-      } else {
-        showToast(`Incorrect! Correct option is (${result.correct_option_key})`, "error");
-      }
-    } catch (err) {
-      console.warn("Direct answer evaluation fallback:", err);
-      let correctOpt = q.options ? q.options.find(o => o.is_correct) : null;
-      let isCorrect = correctOpt ? (correctOpt.id === optId) : false;
-      state.practiceRevealed = true;
-      state.practiceCurrentResult = {
-        is_correct: isCorrect,
-        correct_option_id: correctOpt ? correctOpt.id : (q.options && q.options[2] ? q.options[2].id : null),
-        correct_option_key: correctOpt ? correctOpt.option_key : (q.options && q.options[2] ? q.options[2].option_key : 'C'),
-        explanation: q.explanation || "Official step-by-step NCERT explanation."
-      };
-      this.renderPracticeContent();
+    state.practiceSelectedOpt = optId;
+    state.practiceRevealed = true;
+
+    // Instant local evaluation from loaded question schema (0ms delay, instantaneous visual feedback!)
+    const correctOpt = (q.options || []).find(o => o.is_correct || o.id === q.correct_option_id || o.option_key === q.correct_option_key);
+    const correctId = correctOpt ? correctOpt.id : (q.correct_option_id || null);
+    const correctKey = correctOpt ? correctOpt.option_key : (q.correct_option_key || (q.options && q.options[0] ? q.options[0].option_key : 'A'));
+    const isCorrect = (correctOpt && optId === correctOpt.id) || (optId === correctId);
+
+    const result = {
+      is_correct: isCorrect,
+      correct_option_id: correctId,
+      correct_option_key: correctKey,
+      explanation: q.explanation || "Official step-by-step NCERT explanation."
+    };
+
+    state.practiceCurrentResult = result;
+    if (!state.practiceHistory) state.practiceHistory = {};
+    state.practiceHistory[q.id] = {
+      selectedOpt: optId,
+      result: result
+    };
+
+    // Render IMMEDIATELY! (Turant right answer dekhna aur wrong pe alert)
+    this.renderPracticeContent();
+
+    if (isCorrect) {
+      showToast("Correct! +4 Marks", "success");
+    } else {
+      showToast(`Incorrect! The correct answer is (${correctKey})`, "error");
     }
+
+    // Asynchronously log attempt & mistakes to server in background
+    api.submitPracticeAnswer(q.id, optId).then(serverRes => {
+      if (serverRes && serverRes.explanation) {
+        state.practiceCurrentResult.explanation = serverRes.explanation;
+        if (state.practiceHistory[q.id]) {
+          state.practiceHistory[q.id].result.explanation = serverRes.explanation;
+        }
+      }
+    }).catch(err => {
+      console.warn("Background practice answer sync:", err);
+    });
   },
 
   async checkPracticeAnswer() {
@@ -1422,23 +1454,35 @@ window.app = {
     await this.choosePracticeOption(state.practiceSelectedOpt);
   },
 
+  jumpToPracticeQuestion(index) {
+    if (index >= 0 && index < state.practiceQuestions.length) {
+      state.practiceIndex = index;
+      const q = state.practiceQuestions[index];
+      const hist = state.practiceHistory && state.practiceHistory[q.id];
+      if (hist) {
+        state.practiceSelectedOpt = hist.selectedOpt;
+        state.practiceRevealed = true;
+        state.practiceCurrentResult = hist.result;
+      } else {
+        state.practiceSelectedOpt = null;
+        state.practiceRevealed = false;
+        state.practiceCurrentResult = null;
+      }
+      this.renderPracticeContent();
+      const card = document.getElementById('practiceQuestionCard');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  },
+
   prevPracticeQuestion() {
     if (state.practiceIndex > 0) {
-      state.practiceIndex--;
-      state.practiceSelectedOpt = null;
-      state.practiceRevealed = false;
-      state.practiceCurrentResult = null;
-      this.renderPracticeContent();
+      this.jumpToPracticeQuestion(state.practiceIndex - 1);
     }
   },
 
   nextPracticeQuestion() {
     if (state.practiceIndex < state.practiceQuestions.length - 1) {
-      state.practiceIndex++;
-      state.practiceSelectedOpt = null;
-      state.practiceRevealed = false;
-      state.practiceCurrentResult = null;
-      this.renderPracticeContent();
+      this.jumpToPracticeQuestion(state.practiceIndex + 1);
     }
   },
 

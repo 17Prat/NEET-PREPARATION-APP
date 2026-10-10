@@ -400,6 +400,22 @@ const components = {
           </div>
         ` : ''}
 
+        <!-- Question Quick Navigator Strip -->
+        <div class="practice-palette-strip">
+          <span class="practice-palette-label"><i data-lucide="layers"></i> Questions (${questions.length}):</span>
+          <div class="practice-palette-chips">
+            ${questions.map((item, idx) => {
+              let chipClass = 'practice-chip';
+              if (idx === currentIndex) chipClass += ' active';
+              const hist = (state.practiceHistory && state.practiceHistory[item.id]);
+              if (hist && hist.result) {
+                chipClass += hist.result.is_correct ? ' correct' : ' wrong';
+              }
+              return `<button class="${chipClass}" onclick="app.jumpToPracticeQuestion(${idx})" title="Go to Question ${idx + 1}">${idx + 1}</button>`;
+            }).join('')}
+          </div>
+        </div>
+
         <div class="question-solver-card" id="practiceQuestionCard">
           <div class="question-meta-bar">
             <div class="q-counter-badge">
@@ -412,7 +428,7 @@ const components = {
                 </span>
               ` : (q.source ? `<span class="badge badge-accent">${q.source}</span>` : '')}
               ${q.subject ? `<span class="badge" style="background: rgba(59, 130, 246, 0.18); color: var(--accent-light); font-size: 0.75rem;">${q.subject}</span>` : ''}
-              <span class="badge badge-${q.difficulty.toLowerCase()}">${q.difficulty}</span>
+              <span class="badge badge-${q.difficulty ? q.difficulty.toLowerCase() : 'medium'}">${q.difficulty || 'MEDIUM'}</span>
               <button class="btn-bookmark ${q.is_bookmarked ? 'bookmarked' : ''}" title="Bookmark this question" onclick="app.toggleQuestionBookmark('${q.id}')">
                 <i data-lucide="bookmark"></i>
               </button>
@@ -427,18 +443,25 @@ const components = {
           <div class="options-container">
             ${q.options.map(opt => {
               let optClass = 'option-choice';
-              if (selectedOpt === opt.id) optClass += ' selected';
+              let badgeHtml = '';
+              const isUserChoice = (selectedOpt === opt.id);
+              const isCorrectOpt = result && (result.correct_option_id === opt.id || result.correct_option_key === opt.option_key);
+
+              if (isUserChoice) optClass += ' selected';
               if (revealed) {
-                if (result && result.correct_option_id === opt.id) {
+                if (isCorrectOpt) {
                   optClass += ' correct-reveal';
-                } else if (selectedOpt === opt.id && !result.is_correct) {
+                  badgeHtml = `<span class="badge-answer correct"><i data-lucide="check"></i> Correct Answer</span>`;
+                } else if (isUserChoice && !result.is_correct) {
                   optClass += ' wrong-reveal';
+                  badgeHtml = `<span class="badge-answer wrong"><i data-lucide="x"></i> Your Answer</span>`;
                 }
               }
               return `
                 <div class="${optClass}" onclick="app.choosePracticeOption('${opt.id}')">
                   <div class="option-letter">${opt.option_key}</div>
                   <div class="option-text math-render">${opt.option_text}</div>
+                  ${badgeHtml}
                 </div>
               `;
             }).join('')}
@@ -455,12 +478,24 @@ const components = {
             </button>
           </div>
 
-          <!-- Step-by-Step Explanation Banner -->
+          <!-- Instant Feedback & Step-by-Step Explanation Banner -->
           ${revealed && result ? `
+            <div class="practice-feedback-banner ${result.is_correct ? 'correct' : 'wrong'}">
+              <div class="feedback-title">
+                <i data-lucide="${result.is_correct ? 'check-circle-2' : 'alert-triangle'}"></i>
+                <span>${result.is_correct ? 'Correct! +4 Marks' : `Incorrect! Correct option is (${result.correct_option_key})`}</span>
+              </div>
+              <p class="feedback-subtitle">
+                ${result.is_correct 
+                  ? `Great job! You selected option <strong>(${result.correct_option_key})</strong> correctly.` 
+                  : `You selected option <strong>(${q.options.find(o => o.id === selectedOpt)?.option_key || 'Selected'})</strong>. The correct answer is <strong>(${result.correct_option_key})</strong>.`}
+              </p>
+            </div>
+
             <div class="explanation-card ${!result.is_correct ? 'is-wrong' : ''}">
               <div class="explanation-header">
-                <i data-lucide="${result.is_correct ? 'check-circle-2' : 'x-circle'}"></i>
-                <span>${result.is_correct ? 'Correct Answer (+4)!' : `Incorrect! Correct option is (${result.correct_option_key})`}</span>
+                <i data-lucide="book-open"></i>
+                <span>Detailed Step-by-Step NCERT Solution:</span>
               </div>
               <div class="explanation-body math-render">
                 ${result.explanation}

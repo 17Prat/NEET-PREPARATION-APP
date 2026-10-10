@@ -328,6 +328,187 @@ def seed_database_if_empty(db: Session, force: bool = False):
                 ("D", "Self-replication in vitro", False)
             ]
         },
+        # Authentic Allen Living World Exercise - II PYQ Questions (1 to 12)
+        {
+            "id": "q-living-world-pyq-01",
+            "topic_id": top_fund_tax.id,
+            "text": "Nomenclature is governed by certain universal rules. Which one of the following is contrary to the rules of nomenclature?\n\n[NEET-I 2016 • DL02-0019]",
+            "difficulty": "MEDIUM",
+            "source": "NEET-I 2016 (DL02-0019)",
+            "year": 2016,
+            "explanation": "**Biological names are generally in Latin and written in italics.** They are Latinised or derived from Latin irrespective of their origin. They cannot be written in any arbitrary language.\n\n• The first word represents the genus, and the second denotes specific epithet.\n• Both words, when handwritten, are separately underlined or printed in italics.\n• Hence, statement (1) is contrary to the universal rules of nomenclature.",
+            "options": [
+                ("A", "Biological names can be written in any language", True),
+                ("B", "The first word in a biological name represents the genus name, and the second is a specific epithet", False),
+                ("C", "The names are written in Latin and are italicised", False),
+                ("D", "When written by hand, the names are to be underlined", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-02",
+            "topic_id": top_tax_aids.id,
+            "text": "The label of a herbarium sheet does not carry information on :\n\n[NEET-II 2016 • DL09-0001]",
+            "difficulty": "EASY",
+            "source": "NEET-II 2016 (DL09-0001)",
+            "year": 2016,
+            "explanation": "A **herbarium sheet label** carries date and place of collection, English, local and botanical names, family, and collector's name. It does NOT carry information regarding the **height of the plant**.",
+            "options": [
+                ("A", "Local names", False),
+                ("B", "height of the plant", True),
+                ("C", "date of collection", False),
+                ("D", "name of collector", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-03",
+            "topic_id": top_tax_cat.id,
+            "text": "Match Column-I with Column-II for housefly classification and select the correct option using the codes given below :\n\n| Column-I | Column-II |\n| :--- | :--- |\n| (a) Family | (i) Diptera |\n| (b) Order | (ii) Arthropoda |\n| (c) Class | (iii) Muscidae |\n| (d) Phylum | (iv) Insecta |\n\n[PYQ • DL13-0006]",
+            "difficulty": "MEDIUM",
+            "source": "NEET PYQ (DL13-0006)",
+            "year": 2016,
+            "explanation": "Taxonomic classification of Housefly (*Musca domestica*):\n• Family: Muscidae (a - iii)\n• Order: Diptera (b - i)\n• Class: Insecta (c - iv)\n• Phylum: Arthropoda (d - ii)\nCorrect Code: (a)-(iii), (b)-(i), (c)-(iv), (d)-(ii).",
+            "options": [
+                ("A", "(a)-(iv), (b)-(iii), (c)-(ii), (d)-(i)", False),
+                ("B", "(a)-(iv), (b)-(ii), (c)-(i), (d)-(iii)", False),
+                ("C", "(a)-(iii), (b)-(i), (c)-(iv), (d)-(ii)", True),
+                ("D", "(a)-(iii), (b)-(ii), (c)-(iv), (d)-(i)", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-04",
+            "topic_id": top_what_is_living.id,
+            "text": "Study the four statements (A–D) given below and select the two correct ones out of them :\n(A) Definition of biological species was given by Ernst Mayr.\n(B) Photoperiod does not affect reproduction in plants.\n(C) Binomial nomenclature system was given by R.H. Whittaker.\n(D) In unicellular organisms, reproduction is synonymous with growth.\n\nThe two correct statements are :\n\n[DL01-0018]",
+            "difficulty": "MEDIUM",
+            "source": "NEET PYQ (DL01-0018)",
+            "year": 2016,
+            "explanation": "• Statement (A) is correct: Ernst Mayr pioneered biological species concept.\n• Statement (B) is incorrect: Photoperiod affects reproduction in seasonal breeders.\n• Statement (C) is incorrect: Binomial nomenclature was proposed by Carolus Linnaeus.\n• Statement (D) is correct: In unicellular organisms, reproduction is synonymous with growth.\nHence, A and D are correct.",
+            "options": [
+                ("A", "A and D", True),
+                ("B", "A and B", False),
+                ("C", "B and C", False),
+                ("D", "C and D", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-05",
+            "topic_id": top_tax_aids.id,
+            "text": "Match the items given in Column-I with those in Column-II and select the correct option given below :-\n\n| Column-I | Column-II |\n| :--- | :--- |\n| (a) Herbarium | (i) It is a place having a collection of preserved plants and animals. |\n| (b) Key | (ii) A list that enumerates methodically all the species found in an area with brief description aiding identification. |\n| (c) Museum | (iii) Is a place where dried and pressed plant specimens mounted on sheets are kept. |\n| (d) Catalogue | (iv) A booklet containing a list of characters and their alternates which are helpful in identification of various taxa. |\n\n[NEET-UG 2018 • DL13-0003]",
+            "difficulty": "MEDIUM",
+            "source": "NEET-UG 2018 (DL13-0003)",
+            "year": 2018,
+            "explanation": "• Herbarium: Dried and pressed plant specimens on sheets (a - iii)\n• Key: Booklet with contrasting characters/alternates (b - iv)\n• Museum: Preserved plant and animal specimens (c - i)\n• Catalogue: Methodical species list with brief descriptions (d - ii)\nCorrect matching: (a)-iii, (b)-iv, (c)-i, (d)-ii.",
+            "options": [
+                ("A", "(a)-i, (b)-iv, (c)-iii, (d)-ii", False),
+                ("B", "(a)-iii, (b)-ii, (c)-i, (d)-iv", False),
+                ("C", "(a)-ii, (b)-iv, (c)-iii, (d)-i", False),
+                ("D", "(a)-iii, (b)-iv, (c)-i, (d)-ii", True)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-06",
+            "topic_id": top_fund_tax.id,
+            "text": "Select correctly written scientific name of Mango which was first described by Carolus Linnaeus :\n\n[NEET-UG 2019 • DL02-0014]",
+            "difficulty": "EASY",
+            "source": "NEET-UG 2019 (DL02-0014)",
+            "year": 2019,
+            "explanation": "Author name appears after specific epithet in abbreviated Roman font without italics: ***Mangifera indica* Linn.**",
+            "options": [
+                ("A", "Mangifera indica Car. Linn.", False),
+                ("B", "Mangifera indica Linn.", True),
+                ("C", "Mangifera indica", False),
+                ("D", "Mangifera Indica", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-07",
+            "topic_id": top_fund_tax.id,
+            "text": "Which of the following is against the rules of ICBN?\n\n[NEET-UG 2019 (Odisha) • DL02-0015]",
+            "difficulty": "EASY",
+            "source": "NEET-UG 2019 (Odisha) (DL02-0015)",
+            "year": 2019,
+            "explanation": "Generic name must start with a capital letter and specific epithet with a small letter. Writing both starting with small letters is strictly against ICBN rules.",
+            "options": [
+                ("A", "Hand written scientific names should be underlined.", False),
+                ("B", "Every species should have a generic name and a specific epithet.", False),
+                ("C", "Scientific names are in Latin and should be italicized.", False),
+                ("D", "Generic and specific names should be written starting with small letters.", True)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-08",
+            "topic_id": top_tax_aids.id,
+            "text": "The contrasting characteristics generally in a pair used for identification of animals in taxonomic key are referred to as :\n\n[PYQ • DL11-0001]",
+            "difficulty": "EASY",
+            "source": "NEET PYQ (DL11-0001)",
+            "year": 2020,
+            "explanation": "Contrasting characteristics generally in a pair in taxonomic keys are referred to as **couplets**. Each individual statement in the key is called a **lead**.",
+            "options": [
+                ("A", "Lead", False),
+                ("B", "Couplet", True),
+                ("C", "Doublet", False),
+                ("D", "Alternate", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-09",
+            "topic_id": top_tax_cat.id,
+            "text": "Which one of the following belongs to the family Muscidae?\n\n[NEET-UG 2021 • DL13-0004]",
+            "difficulty": "EASY",
+            "source": "NEET-UG 2021 (DL13-0004)",
+            "year": 2021,
+            "explanation": "**Housefly (*Musca domestica*)** belongs to Phylum Arthropoda, Class Insecta, Order Diptera, Family **Muscidae**.",
+            "options": [
+                ("A", "Fire fly", False),
+                ("B", "Grasshopper", False),
+                ("C", "Cockroach", False),
+                ("D", "House fly", True)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-10",
+            "topic_id": top_tax_cat.id,
+            "text": "In the taxonomic categories which hierarchical arrangement in ascending order is correct in case of animals ?\n\n[NEET-UG 2022 • DL04-0016]",
+            "difficulty": "MEDIUM",
+            "source": "NEET-UG 2022 (DL04-0016)",
+            "year": 2022,
+            "explanation": "Accepted hierarchy: **Kingdom $\\rightarrow$ Phylum $\\rightarrow$ Class $\\rightarrow$ Order $\\rightarrow$ Family $\\rightarrow$ Genus $\\rightarrow$ Species**.",
+            "options": [
+                ("A", "Kingdom, Class, Phylum, Family, Order, Genus, Species", False),
+                ("B", "Kingdom, Order, Class, Phylum, Family, Genus, Species", False),
+                ("C", "Kingdom, Order, Phylum, Class, Family, Genus, Species", False),
+                ("D", "Kingdom, Phylum, Class, Order, Family, Genus, Species", True)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-11",
+            "topic_id": top_tax_aids.id,
+            "text": "Which of the following are true about the taxonomical aid 'key' ?\n(a) Keys are based on the similarities and dissimilarities.\n(b) Key is analytical in nature.\n(c) Keys are based on the contrasting characters in pair called couplet.\n(d) Same key can be used for all taxonomic categories.\n(e) Each statement in the key is called Lead.\n\nChoose the most appropriate answer from the options given below :\n\n[Re-NEET-UG 2022 • DL11-0002]",
+            "difficulty": "MEDIUM",
+            "source": "Re-NEET-UG 2022 (DL11-0002)",
+            "year": 2022,
+            "explanation": "• Statements (a), (b), (c) and (e) are true.\n• Statement (d) is false because separate taxonomic keys are required for each category.",
+            "options": [
+                ("A", "(a), (b) and (c) only", False),
+                ("B", "(b), (c) and (d) only", False),
+                ("C", "(a), (b), (c) and (e) only", True),
+                ("D", "(a), (c), (d) and (e) only", False)
+            ]
+        },
+        {
+            "id": "q-living-world-pyq-12",
+            "topic_id": top_fund_tax.id,
+            "text": "'X' and 'Y' are the components of Binomial nomenclature. This naming system was proposed by 'Z' :\n\n[NEET (UG) 2023 (Manipur) • DL02-0020]",
+            "difficulty": "EASY",
+            "source": "NEET (UG) 2023 (Manipur) (DL02-0020)",
+            "year": 2023,
+            "explanation": "X - Generic name, Y - Specific epithet, proposed by Z - Carolus Linnaeus.",
+            "options": [
+                ("A", "X-Generic name, Y-Specific epithet, Z-Carolus Linnaeus", True),
+                ("B", "X-Specific epithet, Y-Generic name, Z-R.H. Whittaker", False),
+                ("C", "X-Specific epithet, Y-Generic name, Z-Carolus Linnaeus", False),
+                ("D", "X-Generic name, Y-Specific epithet, Z-R.H. Whittaker", False)
+            ]
+        },
         # Systematics Question
         {
             "id": "q-systematics-01",
@@ -542,7 +723,14 @@ def seed_database_if_empty(db: Session, force: bool = False):
     db.add(t1)
     db.flush()
 
-    t1_q_ids = ["q-algae-phyco", "q-living-world-01", "q-systematics-01"]
+    t1_q_ids = [
+        "q-living-world-pyq-01", "q-living-world-pyq-02", "q-living-world-pyq-03", "q-living-world-pyq-04",
+        "q-living-world-pyq-05", "q-living-world-pyq-06", "q-living-world-pyq-07", "q-living-world-pyq-08",
+        "q-living-world-pyq-09", "q-living-world-pyq-10", "q-living-world-pyq-11", "q-living-world-pyq-12",
+        "q-algae-phyco", "q-living-world-01", "q-systematics-01"
+    ]
+    t1.total_marks = len(t1_q_ids) * 4
+    t1.duration_minutes = 20
     for idx, qid in enumerate(t1_q_ids, 1):
         db.add(TestQuestion(
             id=str(uuid.uuid4()),
